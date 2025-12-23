@@ -31,6 +31,7 @@ export function ProjectListPage() {
   const [scanning, setScanning] = useState(false)
   const scanCancelledRef = useRef(false)
   const [showStopConfirm, setShowStopConfirm] = useState(false)
+  const [showRescanConfirm, setShowRescanConfirm] = useState(false)
   const [sortBy, setSortBy] = useState<'name' | 'createdAt' | 'updatedAt' | 'size'>('updatedAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [scanProgress, setScanProgress] = useState({ stage: '', current: 0, total: 0, message: '' })
@@ -242,22 +243,42 @@ export function ProjectListPage() {
     setShowStopConfirm(false)
   }
 
-  const handleScanAll = async () => {
+  const confirmRescan = () => {
+    setShowRescanConfirm(false)
+    startScan()
+  }
+
+  const cancelRescan = () => {
+    setShowRescanConfirm(false)
+  }
+
+  const handleScanAll = () => {
     if (!currentScanFolder) {
       console.warn('没有选中的扫描目录')
       return
     }
-    // 如果正在扫描，显示确认对话框
+    // 如果正在扫描，显示停止确认对话框
     if (scanning) {
       handleStopScan()
       return
     }
+    // 如果已有项目，显示重新扫描确认对话框
+    if (projects.length > 0) {
+      setShowRescanConfirm(true)
+      return
+    }
+    // 否则直接开始扫描
+    startScan()
+  }
 
+  const startScan = async () => {
     console.log('开始扫描:', currentScanFolder)
     // 开始扫描
     scanCancelledRef.current = false
     setLoading(false)
     setScanning(true)
+    // 清空项目列表，显示空项目页面和进度条
+    setProjects([])
     setScanProgress({ stage: 'starting', current: 0, total: 0, message: `准备扫描 ${currentScanFolder.split('/').pop()}...` })
 
     try {
@@ -479,6 +500,24 @@ export function ProjectListPage() {
             <AlertDialogCancel onClick={cancelStopScan}>取消</AlertDialogCancel>
             <AlertDialogAction onClick={confirmStopScan} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               确认停止
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* 重新扫描确认对话框 */}
+      <AlertDialog open={showRescanConfirm} onOpenChange={setShowRescanConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认重新扫描？</AlertDialogTitle>
+            <AlertDialogDescription>
+              重新扫描将清空当前项目列表并重新扫描 {currentScanFolder?.split('/').pop()} 目录。此操作会覆盖之前的项目数据。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelRescan}>取消</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRescan}>
+              确认扫描
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
