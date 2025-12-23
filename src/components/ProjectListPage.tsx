@@ -3,6 +3,12 @@ import type { Project } from '@/types'
 import { ProjectGrid } from '@/components/ProjectCard'
 import { Button } from '@/components/ui/button'
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
   SortAscIcon,
   SortDescIcon,
   PlusIcon,
@@ -213,23 +219,38 @@ export function ProjectListPage() {
         </div>
         <div className="flex items-center gap-2">
           {/* 排序 */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
-            }}
-          >
-            {sortOrder === 'asc' ? (
-              <SortAscIcon className="h-4 w-4 mr-2" />
-            ) : (
-              <SortDescIcon className="h-4 w-4 mr-2" />
-            )}
-            {sortBy === 'name' && '按名称'}
-            {sortBy === 'size' && '按大小'}
-            {sortBy === 'createdAt' && '按创建时间'}
-            {sortBy === 'updatedAt' && '按更新时间'}
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+              >
+                {sortOrder === 'asc' ? (
+                  <SortAscIcon className="h-4 w-4 mr-2" />
+                ) : (
+                  <SortDescIcon className="h-4 w-4 mr-2" />
+                )}
+                {sortBy === 'name' && '按名称'}
+                {sortBy === 'size' && '按大小'}
+                {sortBy === 'createdAt' && '按创建时间'}
+                {sortBy === 'updatedAt' && '按更新时间'}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setSortBy('name')}>
+                按名称
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSortBy('size')}>
+                按大小
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSortBy('createdAt')}>
+                按创建时间
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSortBy('updatedAt')}>
+                按更新时间
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* 扫描 */}
           <Button
