@@ -342,6 +342,20 @@ export function ProjectListPage() {
         <div className="flex items-center justify-center flex-1">
           <div className="text-muted-foreground">加载中...</div>
         </div>
+      ) : scanning ? (
+        // 扫描中，显示进度
+        <div className="flex flex-col items-center justify-center h-full text-center p-12">
+          <LoaderIcon className="h-12 w-12 animate-spin text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold mb-2">正在扫描项目</h3>
+          <p className="text-sm text-muted-foreground max-w-md">
+            {scanProgress.message || '扫描中...'}
+          </p>
+          {scanProgress.current > 0 && (
+            <p className="text-sm text-muted-foreground mt-2">
+              已扫描: {scanProgress.current}/{scanProgress.total}
+            </p>
+          )}
+        </div>
       ) : projects.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full text-center p-12">
           <h3 className="text-lg font-semibold mb-2">
