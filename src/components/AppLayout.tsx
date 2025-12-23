@@ -106,7 +106,7 @@ function SidebarItem({ icon, label, count, active }: SidebarItemProps) {
   return (
     <button
       className={cn(
-        'flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors',
+        'flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors cursor-pointer',
         active
           ? 'bg-primary text-primary-foreground'
           : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'

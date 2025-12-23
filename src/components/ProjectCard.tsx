@@ -61,7 +61,7 @@ export function ProjectCard({
   return (
     <div
       className={cn(
-        "group relative rounded-lg p-4 transition-all duration-200",
+        "group relative rounded-lg p-4 transition-all duration-200 cursor-pointer",
         colorClass
       )}
       style={{
