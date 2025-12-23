@@ -85,38 +85,41 @@ export function NavScan() {
         {/* 显示已保存的扫描目录 */}
         {scanFolders.length > 0 && (
           <SidebarMenu>
-            {scanFolders.map((folderPath) => (
-              <SidebarMenuItem key={folderPath}>
-                <SidebarMenuSub>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton className="group/data-[collapsible=icon]:hidden">
-                      <FolderIcon className="h-4 w-4" />
-                      <span className="truncate flex-1">{folderPath}</span>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-5 w-5"
-                          onClick={() => handleScan(folderPath)}
-                          title="扫描"
-                        >
-                          <ScanIcon className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-5 w-5"
-                          onClick={() => handleRemoveFolder(folderPath)}
-                          title="删除"
-                        >
-                          <Trash2Icon className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                </SidebarMenuSub>
-              </SidebarMenuItem>
-            ))}
+            {scanFolders.map((folderPath) => {
+              const folderName = folderPath.split('/').pop() || folderPath
+              return (
+                <SidebarMenuItem key={folderPath}>
+                  <SidebarMenuSub>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton className="group/data-[collapsible=icon]:hidden">
+                        <FolderIcon className="h-4 w-4" />
+                        <span className="truncate flex-1" title={folderPath}>{folderName}</span>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-5 w-5"
+                            onClick={() => handleScan(folderPath)}
+                            title="扫描"
+                          >
+                            <ScanIcon className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-5 w-5"
+                            onClick={() => handleRemoveFolder(folderPath)}
+                            title="删除"
+                          >
+                            <Trash2Icon className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  </SidebarMenuSub>
+                </SidebarMenuItem>
+              )
+            })}
           </SidebarMenu>
         )}
       </SidebarGroupContent>
