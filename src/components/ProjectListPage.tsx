@@ -116,9 +116,10 @@ export function ProjectListPage() {
   // 监听扫描进度
   useEffect(() => {
     const cleanup = window.electronAPI.onScanProgress((progress) => {
-      setScanProgress(progress)
-      if (progress.stage === 'complete') {
-        setScanning(false)
+      // 只在主进程扫描目录时更新进度，不处理 'complete' 事件
+      // 因为我们需要在前端处理完所有项目详情后才算完成
+      if (progress.stage !== 'complete') {
+        setScanProgress(progress)
       }
     })
     return cleanup
@@ -395,12 +396,18 @@ export function ProjectListPage() {
         </div>
 
         {/* 进度条 */}
-        {scanning && scanProgress.total > 0 && (
+        {scanning && (
           <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
-            <div
-              className="bg-primary h-full transition-all duration-300 ease-out"
-              style={{ width: `${(scanProgress.current / scanProgress.total) * 100}%` }}
-            />
+            {scanProgress.total > 0 ? (
+              // 确定进度条：显示实际进度
+              <div
+                className="bg-primary h-full transition-all duration-300 ease-out"
+                style={{ width: `${(scanProgress.current / scanProgress.total) * 100}%` }}
+              />
+            ) : (
+              // 不确定进度条：动画效果
+              <div className="bg-primary h-full animate-pulse" style={{ width: '30%' }} />
+            )}
           </div>
         )}
       </div>
