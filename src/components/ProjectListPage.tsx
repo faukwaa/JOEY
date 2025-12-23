@@ -60,57 +60,8 @@ export function ProjectListPage() {
     })
   }, [])
 
-  // 扫描项目（强制重新扫描）
-  const scanProjects = useCallback(async (folders: string[]): Promise<Project[]> => {
-    const allProjects: Project[] = []
-    const seenPaths = new Set<string>()
-
-    for (const folder of folders) {
-      const scanResult = await window.electronAPI.scanProjects([folder])
-      if (scanResult.projects && scanResult.projects.length > 0) {
-        // 转换为 Project 类型并获取详细信息
-        const projectsWithDetails = await Promise.all(
-          scanResult.projects.map(async (p: { name: string; path: string }) => {
-            // 获取 git 信息
-            const gitInfo = await window.electronAPI.getGitInfo(p.path)
-
-            // 获取项目文件信息
-            const stats = await window.electronAPI.getProjectStats(p.path)
-
-            return {
-              id: encodeURIComponent(p.path),
-              name: p.name,
-              path: p.path,
-              scanFolder: folder, // 记录项目来自哪个扫描目录
-              createdAt: stats?.createdAt ? new Date(stats.createdAt) : new Date(),
-              updatedAt: stats?.updatedAt ? new Date(stats.updatedAt) : new Date(),
-              addedAt: new Date(),
-              size: stats?.size || 0,
-              hasNodeModules: stats?.hasNodeModules || false,
-              gitBranch: gitInfo.branch,
-              gitStatus: gitInfo.status as 'clean' | 'modified' | 'error' | 'no-git',
-              gitChanges: gitInfo.changes,
-              packageManager: stats?.packageManager,
-              favorite: false,
-            } as Project
-          })
-        )
-
-        // 去重：只添加尚未见过的路径
-        for (const project of projectsWithDetails) {
-          if (!seenPaths.has(project.path)) {
-            seenPaths.add(project.path)
-            allProjects.push(project)
-          }
-        }
-      }
-    }
-
-    return allProjects
-  }, [])
-
-  // 加载项目列表（优先使用缓存）
-  const loadProjects = useCallback(async (forceScan = false) => {
+  // 加载项目列表（只从缓存加载，不自动扫描）
+  const loadProjects = useCallback(async () => {
     setLoading(true)
     try {
       // 获取已保存的扫描目录
@@ -124,30 +75,24 @@ export function ProjectListPage() {
         return
       }
 
-      // 如果不是强制扫描，先尝试从缓存加载
-      if (!forceScan) {
-        const cache = await window.electronAPI.getProjectsCache()
-        if (cache && cache.projects && cache.projects.length > 0) {
-          // 检查缓存的文件夹是否与当前配置的文件夹一致
-          const cachedFolders = cache.folders || []
-          const foldersMatch = folders.length === cachedFolders.length &&
-            folders.every((f: string) => cachedFolders.includes(f))
-
-          if (foldersMatch) {
-            console.log('从缓存加载项目列表')
-            const cachedProjects = convertCachedProjects(cache.projects)
-            setAllProjects(cachedProjects)
-            setProjects(cachedProjects)
-            return
-          }
+      // 从缓存加载
+      const cache = await window.electronAPI.getProjectsCache()
+      if (cache && cache.projects) {
+        console.log('从缓存加载项目列表')
+        const cachedProjects = convertCachedProjects(cache.projects)
+        setAllProjects(cachedProjects)
+        // 如果有选中的扫描目录，只显示该目录的项目
+        if (currentScanFolder) {
+          const filtered = cachedProjects.filter(p => p.scanFolder === currentScanFolder)
+          setProjects(filtered)
+        } else {
+          setProjects(cachedProjects)
         }
+      } else {
+        // 没有缓存，显示空状态
+        setAllProjects([])
+        setProjects([])
       }
-
-      // 没有缓存或强制扫描，进行扫描
-      console.log(forceScan ? '强制扫描项目...' : '首次扫描项目...')
-      const scannedProjects = await scanProjects(folders)
-      setAllProjects(scannedProjects)
-      setProjects(scannedProjects)
     } catch (error) {
       console.error('Failed to load projects:', error)
       setAllProjects([])
@@ -155,11 +100,11 @@ export function ProjectListPage() {
     } finally {
       setLoading(false)
     }
-  }, [convertCachedProjects, scanProjects])
+  }, [convertCachedProjects, currentScanFolder])
 
   // 加载项目列表
   useEffect(() => {
-    loadProjects(false)
+    loadProjects()
   }, [loadProjects])
 
   // 监听扫描进度
@@ -176,7 +121,7 @@ export function ProjectListPage() {
   // 监听自定义事件来刷新项目列表
   useEffect(() => {
     const handleRefresh = () => {
-      loadProjects(false)
+      loadProjects()
     }
 
     window.addEventListener('refresh-projects', handleRefresh)
