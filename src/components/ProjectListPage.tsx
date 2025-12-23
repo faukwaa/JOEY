@@ -36,6 +36,7 @@ export function ProjectListPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [scanProgress, setScanProgress] = useState({ stage: '', current: 0, total: 0, message: '' })
   const [currentScanFolder, setCurrentScanFolder] = useState<string>('') // 当前选中的扫描目录
+  const scanningRef = useRef(false) // 扫描状态 ref，用于进度监听器判断
 
   // 调试：监听 projects 变化
   useEffect(() => {
@@ -127,8 +128,13 @@ export function ProjectListPage() {
   // 监听扫描进度
   useEffect(() => {
     const cleanup = window.electronAPI.onScanProgress((progress) => {
-      // 只在主进程扫描目录时更新进度，不处理 'complete' 事件
-      // 因为我们需要在前端处理完所有项目详情后才算完成
+      // 扫描期间前端完全控制进度，忽略主进程的目录扫描进度事件
+      // 这样可以确保进度条始终从前端设置的值开始，不会被主进程的事件覆盖
+      if (scanningRef.current) {
+        // 扫描中，忽略主进程事件
+        return
+      }
+      // 非扫描状态下才处理主进程事件（用于其他场景）
       if (progress.stage !== 'complete') {
         setScanProgress(progress)
       }
@@ -275,6 +281,7 @@ export function ProjectListPage() {
     console.log('开始扫描:', currentScanFolder)
     // 开始扫描
     scanCancelledRef.current = false
+    scanningRef.current = true // 立即设置 ref，阻止主进程事件更新进度
     setLoading(false)
     setScanning(true)
     // 清空项目列表，显示空项目页面和进度条
@@ -382,6 +389,7 @@ export function ProjectListPage() {
     } finally {
       console.log('扫描 finally，设置 scanning = false')
       setScanning(false)
+      scanningRef.current = false // 恢复扫描状态，允许主进程事件更新进度
       scanCancelledRef.current = false
     }
   }
