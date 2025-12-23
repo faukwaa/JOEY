@@ -421,6 +421,11 @@ ipcMain.handle('remove-scan-folder', async (_, folder: string) => {
   return saveScanFolders(newFolders)
 })
 
+// 保存项目缓存（由前端调用）
+ipcMain.handle('save-projects-cache', async (_, projects: unknown[], folders: string[]) => {
+  return saveProjectsCache(projects, folders)
+})
+
 // 获取项目统计信息
 ipcMain.handle('get-project-stats', async (_, projectPath: string) => {
   try {

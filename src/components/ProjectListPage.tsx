@@ -344,6 +344,33 @@ export function ProjectListPage() {
         setAllProjects(newAllProjects)
         setProjects(projectsWithDetails)
         console.log(`扫描完成，找到 ${projectsWithDetails.length} 个项目`)
+
+        // 保存到缓存（包括 scanFolder 信息）
+        try {
+          // 获取当前所有扫描目录
+          const foldersResult = await window.electronAPI.getScanFolders()
+          const folders = foldersResult.folders || []
+          // 保存序列化后的项目数据
+          const serializedProjects = newAllProjects.map(p => ({
+            name: p.name,
+            path: p.path,
+            scanFolder: p.scanFolder,
+            createdAt: p.createdAt.toISOString(),
+            updatedAt: p.updatedAt.toISOString(),
+            addedAt: p.addedAt.toISOString(),
+            size: p.size,
+            hasNodeModules: p.hasNodeModules,
+            gitBranch: p.gitBranch,
+            gitStatus: p.gitStatus,
+            gitChanges: p.gitChanges,
+            packageManager: p.packageManager,
+            favorite: p.favorite,
+          }))
+          await window.electronAPI.saveProjectsCache(serializedProjects, folders)
+          console.log('项目列表已保存到缓存')
+        } catch (error) {
+          console.error('保存缓存失败:', error)
+        }
       } else {
         // 该目录没有项目，清空显示
         const newAllProjects = allProjects.filter(p => p.scanFolder !== currentScanFolder)
