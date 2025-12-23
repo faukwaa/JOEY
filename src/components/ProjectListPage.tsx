@@ -422,6 +422,27 @@ export function ProjectListPage() {
               : '在左侧选择一个扫描目录'
             }
           </p>
+          {/* 进度条 */}
+          {scanning && (
+            <div className="flex flex-col gap-2 w-full max-w-md mb-4 animate-in fade-in slide-in-from-top-4 duration-300">
+              <div className="text-sm text-muted-foreground">
+                {scanProgress.message || '扫描中...'}
+                {scanProgress.total > 0 && (
+                  <span> ({scanProgress.current}/{scanProgress.total})</span>
+                )}
+              </div>
+              <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
+                {scanProgress.total > 0 ? (
+                  <div
+                    className="bg-primary h-full transition-all duration-300 ease-out"
+                    style={{ width: `${Math.round((scanProgress.current / scanProgress.total) * 100)}%` }}
+                  />
+                ) : (
+                  <div className="bg-primary h-full animate-pulse" style={{ width: '30%' }} />
+                )}
+              </div>
+            </div>
+          )}
           {currentScanFolder && (
             <Button size="sm" onClick={handleScanAll} disabled={scanning}>
               {scanning ? (
