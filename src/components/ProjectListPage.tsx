@@ -414,7 +414,11 @@ export function ProjectListPage() {
             </div>
           )}
           {currentScanFolder && (
-            <Button size="sm" onClick={handleScanAll} disabled={scanning}>
+            <Button
+              size="sm"
+              onClick={handleScanAll}
+              variant={scanning ? "destructive" : "default"}
+            >
               {scanning ? (
                 <>
                   <RefreshCwIcon className="h-4 w-4 mr-2 animate-spin" />
