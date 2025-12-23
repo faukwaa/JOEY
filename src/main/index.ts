@@ -64,6 +64,47 @@ const saveScanFolders = (folders: string[]) => {
   }
 }
 
+// 项目缓存文件路径
+const getProjectsCachePath = () => {
+  const userDataPath = app.getPath('userData')
+  const configDir = join(userDataPath, 'config')
+  if (!existsSync(configDir)) {
+    mkdirSync(configDir, { recursive: true })
+  }
+  return join(configDir, 'projects-cache.json')
+}
+
+// 读取项目缓存
+const getProjectsCache = () => {
+  try {
+    const cachePath = getProjectsCachePath()
+    if (existsSync(cachePath)) {
+      const data = readFileSync(cachePath, 'utf-8')
+      return JSON.parse(data)
+    }
+  } catch (error) {
+    console.error('Error reading projects cache:', error)
+  }
+  return null
+}
+
+// 保存项目缓存
+const saveProjectsCache = (projects: unknown[], folders: string[]) => {
+  try {
+    const cachePath = getProjectsCachePath()
+    const cache = {
+      projects,
+      folders,
+      scannedAt: new Date().toISOString(),
+    }
+    writeFileSync(cachePath, JSON.stringify(cache, null, 2))
+    return { success: true }
+  } catch (error) {
+    console.error('Error saving projects cache:', error)
+    return { success: false, error: String(error) }
+  }
+}
+
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite @variables by Replacement
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 
@@ -272,7 +313,16 @@ ipcMain.handle('scan-projects', async (_, folders: string[]) => {
 
   console.log(`总共找到 ${uniqueProjects.length} 个唯一项目`)
 
+  // 保存到缓存
+  saveProjectsCache(uniqueProjects, folders)
+
   return { projects: uniqueProjects }
+})
+
+// 读取项目缓存
+ipcMain.handle('get-projects-cache', async () => {
+  const cache = getProjectsCache()
+  return cache
 })
 
 ipcMain.handle('get-git-info', async (_, projectPath: string) => {

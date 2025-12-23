@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   // Project scanning APIs
   scanProjects: (folders: string[]) => ipcRenderer.invoke('scan-projects', folders),
+  getProjectsCache: () => ipcRenderer.invoke('get-projects-cache'),
   getGitInfo: (projectPath: string) => ipcRenderer.invoke('get-git-info', projectPath),
   openProjectFolder: (projectPath: string) => ipcRenderer.invoke('open-project-folder', projectPath),
   selectFolders: () => ipcRenderer.invoke('select-folders'),
@@ -32,6 +33,7 @@ declare global {
       on: (channel: string, callback: (...args: unknown[]) => void) => void
       invoke: (channel: string, ...args: unknown[]) => Promise<unknown>
       scanProjects: (folders: string[]) => Promise<{ projects: unknown[] }>
+      getProjectsCache: () => Promise<{ projects: unknown[]; folders: string[]; scannedAt: string } | null>
       getGitInfo: (projectPath: string) => Promise<{ branch: string | null; status: 'clean' | 'modified' | 'error' | 'no-git'; changes: number }>
       openProjectFolder: (projectPath: string) => Promise<{ success: boolean }>
       selectFolders: () => Promise<{ folders: string[] }>

@@ -40,6 +40,41 @@ const saveScanFolders = (folders) => {
     return { success: false, error: String(error) };
   }
 };
+const getProjectsCachePath = () => {
+  const userDataPath = app.getPath("userData");
+  const configDir = join(userDataPath, "config");
+  if (!existsSync(configDir)) {
+    mkdirSync(configDir, { recursive: true });
+  }
+  return join(configDir, "projects-cache.json");
+};
+const getProjectsCache = () => {
+  try {
+    const cachePath = getProjectsCachePath();
+    if (existsSync(cachePath)) {
+      const data = readFileSync(cachePath, "utf-8");
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.error("Error reading projects cache:", error);
+  }
+  return null;
+};
+const saveProjectsCache = (projects, folders) => {
+  try {
+    const cachePath = getProjectsCachePath();
+    const cache = {
+      projects,
+      folders,
+      scannedAt: (/* @__PURE__ */ new Date()).toISOString()
+    };
+    writeFileSync(cachePath, JSON.stringify(cache, null, 2));
+    return { success: true };
+  } catch (error) {
+    console.error("Error saving projects cache:", error);
+    return { success: false, error: String(error) };
+  }
+};
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
 function createWindow() {
   win = new BrowserWindow({
@@ -189,7 +224,12 @@ ipcMain.handle("scan-projects", async (_, folders) => {
     (project, index, self) => index === self.findIndex((p) => p.path === project.path)
   );
   console.log(`总共找到 ${uniqueProjects.length} 个唯一项目`);
+  saveProjectsCache(uniqueProjects, folders);
   return { projects: uniqueProjects };
+});
+ipcMain.handle("get-projects-cache", async () => {
+  const cache = getProjectsCache();
+  return cache;
 });
 ipcMain.handle("get-git-info", async (_, projectPath) => {
   try {

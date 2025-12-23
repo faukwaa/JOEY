@@ -23,42 +23,83 @@ export function ProjectListPage() {
   const [sortBy, setSortBy] = useState<'name' | 'createdAt' | 'updatedAt' | 'size'>('updatedAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
-  const loadMockProjects = useCallback(() => {
-    const mockProjects: Project[] = [
-      {
-        id: '1',
-        name: 'project-mng',
-        path: '/Users/zhoutao/code/electron/projectMng',
-        createdAt: new Date('2024-01-15'),
-        updatedAt: new Date(),
-        addedAt: new Date('2024-01-15'),
-        size: 1024 * 1024 * 256,
-        hasNodeModules: true,
-        gitBranch: 'main',
-        gitStatus: 'clean',
-        packageManager: 'pnpm',
-        favorite: true,
-      },
-      {
-        id: '2',
-        name: 'my-blog',
-        path: '/Users/zhoutao/code/electron/my-blog',
-        createdAt: new Date('2024-02-01'),
-        updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-        addedAt: new Date('2024-02-01'),
-        size: 1024 * 1024 * 128,
-        hasNodeModules: true,
-        gitBranch: 'main',
-        gitStatus: 'modified',
-        gitChanges: 3,
-        packageManager: 'npm',
-        favorite: false,
-      },
-    ]
-    setProjects(mockProjects)
+  // 将缓存数据转换为 Project 类型
+  const convertCachedProjects = useCallback((cachedProjects: unknown[]): Project[] => {
+    return cachedProjects.map((p: unknown) => {
+      const project = p as {
+        path: string
+        name: string
+        createdAt?: string
+        updatedAt?: string
+        addedAt?: string
+        size?: number
+        hasNodeModules?: boolean
+        gitBranch?: string
+        gitStatus?: string
+        gitChanges?: number
+        packageManager?: string
+        favorite?: boolean
+      }
+      return {
+        id: encodeURIComponent(project.path),
+        name: project.name,
+        path: project.path,
+        createdAt: project.createdAt ? new Date(project.createdAt) : new Date(),
+        updatedAt: project.updatedAt ? new Date(project.updatedAt) : new Date(),
+        addedAt: project.addedAt ? new Date(project.addedAt) : new Date(),
+        size: project.size || 0,
+        hasNodeModules: project.hasNodeModules || false,
+        gitBranch: project.gitBranch,
+        gitStatus: project.gitStatus,
+        gitChanges: project.gitChanges,
+        packageManager: project.packageManager,
+        favorite: project.favorite || false,
+      }
+    })
   }, [])
 
-  const loadProjects = useCallback(async () => {
+  // 扫描项目（强制重新扫描）
+  const scanProjects = useCallback(async (folders: string[]): Promise<Project[]> => {
+    const allProjects: Project[] = []
+
+    for (const folder of folders) {
+      const scanResult = await window.electronAPI.scanProjects([folder])
+      if (scanResult.projects && scanResult.projects.length > 0) {
+        // 转换为 Project 类型并获取详细信息
+        const projectsWithDetails = await Promise.all(
+          scanResult.projects.map(async (p: { name: string; path: string }) => {
+            // 获取 git 信息
+            const gitInfo = await window.electronAPI.getGitInfo(p.path)
+
+            // 获取项目文件信息
+            const stats = await window.electronAPI.getProjectStats(p.path)
+
+            return {
+              id: encodeURIComponent(p.path),
+              name: p.name,
+              path: p.path,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              addedAt: new Date(),
+              size: stats?.size || 0,
+              hasNodeModules: stats?.hasNodeModules || false,
+              gitBranch: gitInfo.branch,
+              gitStatus: gitInfo.status as 'clean' | 'modified' | 'error' | 'no-git',
+              gitChanges: gitInfo.changes,
+              packageManager: stats?.packageManager,
+              favorite: false,
+            } as Project
+          })
+        )
+        allProjects.push(...projectsWithDetails)
+      }
+    }
+
+    return allProjects
+  }, [])
+
+  // 加载项目列表（优先使用缓存）
+  const loadProjects = useCallback(async (forceScan = false) => {
     setLoading(true)
     try {
       // 获取已保存的扫描目录
@@ -66,65 +107,49 @@ export function ProjectListPage() {
       const folders = foldersResult.folders || []
 
       if (folders.length === 0) {
-        // 没有配置扫描目录，使用模拟数据
-        loadMockProjects()
+        // 没有配置扫描目录，显示空状态
+        setProjects([])
         return
       }
 
-      // 扫描所有目录
-      const allProjects: Project[] = []
-      for (const folder of folders) {
-        const scanResult = await window.electronAPI.scanProjects([folder])
-        if (scanResult.projects && scanResult.projects.length > 0) {
-          // 转换为 Project 类型并获取详细信息
-          const projectsWithDetails = await Promise.all(
-            scanResult.projects.map(async (p: { name: string; path: string }) => {
-              // 获取 git 信息
-              const gitInfo = await window.electronAPI.getGitInfo(p.path)
+      // 如果不是强制扫描，先尝试从缓存加载
+      if (!forceScan) {
+        const cache = await window.electronAPI.getProjectsCache()
+        if (cache && cache.projects && cache.projects.length > 0) {
+          // 检查缓存的文件夹是否与当前配置的文件夹一致
+          const cachedFolders = cache.folders || []
+          const foldersMatch = folders.length === cachedFolders.length &&
+            folders.every((f: string) => cachedFolders.includes(f))
 
-              // 获取项目文件信息
-              const stats = await window.electronAPI.getProjectStats(p.path)
-
-              return {
-                id: encodeURIComponent(p.path), // 使用 URL 编码处理中文路径
-                name: p.name,
-                path: p.path,
-                createdAt: new Date(), // TODO: 从文件系统获取
-                updatedAt: new Date(),
-                addedAt: new Date(),
-                size: stats?.size || 0,
-                hasNodeModules: stats?.hasNodeModules || false,
-                gitBranch: gitInfo.branch,
-                gitStatus: gitInfo.status as 'clean' | 'modified' | 'error' | 'no-git',
-                gitChanges: gitInfo.changes,
-                packageManager: stats?.packageManager,
-                favorite: false,
-              } as Project
-            })
-          )
-          allProjects.push(...projectsWithDetails)
+          if (foldersMatch) {
+            console.log('从缓存加载项目列表')
+            setProjects(convertCachedProjects(cache.projects))
+            return
+          }
         }
       }
 
-      setProjects(allProjects)
+      // 没有缓存或强制扫描，进行扫描
+      console.log(forceScan ? '强制扫描项目...' : '首次扫描项目...')
+      const scannedProjects = await scanProjects(folders)
+      setProjects(scannedProjects)
     } catch (error) {
       console.error('Failed to load projects:', error)
-      // 出错时使用模拟数据
-      loadMockProjects()
+      setProjects([])
     } finally {
       setLoading(false)
     }
-  }, [loadMockProjects])
+  }, [convertCachedProjects, scanProjects])
 
   // 加载项目列表
   useEffect(() => {
-    loadProjects()
+    loadProjects(false)
   }, [loadProjects])
 
   // 监听自定义事件来刷新项目列表
   useEffect(() => {
     const handleRefresh = () => {
-      loadProjects()
+      loadProjects(false)
     }
 
     window.addEventListener('refresh-projects', handleRefresh)
@@ -169,7 +194,7 @@ export function ProjectListPage() {
 
   const handleRefreshProject = async (project: Project) => {
     console.log('Refreshing project:', project.name)
-    // TODO: 重新获取项目信息
+    // TODO: 重新获取单个项目信息
   }
 
   const handleDeleteProject = (project: Project) => {
@@ -187,8 +212,13 @@ export function ProjectListPage() {
     try {
       const result = await window.electronAPI.selectFolders()
       if (result.folders && result.folders.length > 0) {
-        console.log('Selected folders:', result.folders)
-        // TODO: 添加选中的文件夹
+        const newFolder = result.folders[0]
+        // 保存到配置
+        await window.electronAPI.addScanFolder(newFolder)
+        // 重新加载列表
+        await loadProjects(false)
+        // 触发刷新事件
+        window.dispatchEvent(new CustomEvent('refresh-projects'))
       }
     } catch (error) {
       console.error('Failed to select folders:', error)
@@ -198,7 +228,7 @@ export function ProjectListPage() {
   const handleScanAll = async () => {
     setScanning(true)
     try {
-      await loadProjects()
+      await loadProjects(true) // 强制扫描
     } finally {
       setScanning(false)
     }
@@ -278,6 +308,18 @@ export function ProjectListPage() {
       {loading ? (
         <div className="flex items-center justify-center flex-1">
           <div className="text-muted-foreground">加载中...</div>
+        </div>
+      ) : projects.length === 0 ? (
+        <div className="flex flex-col items-center justify-center h-full text-center p-12">
+          <PlusIcon className="h-16 w-16 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold mb-2">还没有项目</h3>
+          <p className="text-sm text-muted-foreground max-w-md mb-4">
+            点击左侧的"添加扫描目录"按钮，选择要监控的项目文件夹。
+          </p>
+          <Button size="sm" onClick={handleAddProject}>
+            <PlusIcon className="h-4 w-4 mr-2" />
+            添加扫描目录
+          </Button>
         </div>
       ) : (
         <ProjectGrid
