@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { Project } from '@/types'
 import { ProjectGrid } from '@/components/ProjectCard'
 import { Button } from '@/components/ui/button'
@@ -29,7 +29,7 @@ export function ProjectListPage() {
   const [allProjects, setAllProjects] = useState<Project[]>([]) // 保存所有项目
   const [loading, setLoading] = useState(true)
   const [scanning, setScanning] = useState(false)
-  const [scanCancelled, setScanCancelled] = useState(false)
+  const scanCancelledRef = useRef(false)
   const [showStopConfirm, setShowStopConfirm] = useState(false)
   const [sortBy, setSortBy] = useState<'name' | 'createdAt' | 'updatedAt' | 'size'>('updatedAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
@@ -235,7 +235,7 @@ export function ProjectListPage() {
 
   const confirmStopScan = () => {
     setShowStopConfirm(false)
-    setScanCancelled(true)
+    scanCancelledRef.current = true
   }
 
   const cancelStopScan = () => {
@@ -255,7 +255,7 @@ export function ProjectListPage() {
 
     console.log('开始扫描:', currentScanFolder)
     // 开始扫描
-    setScanCancelled(false)
+    scanCancelledRef.current = false
     setLoading(false)
     setScanning(true)
     setScanProgress({ stage: 'starting', current: 0, total: 0, message: `准备扫描 ${currentScanFolder.split('/').pop()}...` })
@@ -277,7 +277,7 @@ export function ProjectListPage() {
           console.log(`处理第 ${i + 1}/${scanResult.projects.length} 个项目: ${p.name}`)
 
           // 检查是否已取消
-          if (scanCancelled) {
+          if (scanCancelledRef.current) {
             console.log('扫描已取消')
             setScanProgress({ stage: 'cancelled', current: projectsWithDetails.length, total: scanResult.projects.length, message: '扫描已取消' })
             break
@@ -334,7 +334,7 @@ export function ProjectListPage() {
     } finally {
       console.log('扫描 finally，设置 scanning = false')
       setScanning(false)
-      setScanCancelled(false)
+      scanCancelledRef.current = false
     }
   }
 
