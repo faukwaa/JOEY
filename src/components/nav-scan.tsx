@@ -1,5 +1,6 @@
 import { FolderIcon, Trash2Icon, PlusIcon } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
+import { cn } from "@/lib/utils"
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -13,16 +14,22 @@ import { Button } from "@/components/ui/button"
 
 export function NavScan() {
   const [scanFolders, setScanFolders] = useState<string[]>([])
+  const [selectedFolder, setSelectedFolder] = useState<string>("")
 
   // 加载已保存的扫描目录
   const loadScanFolders = useCallback(async () => {
     try {
       const result = await window.electronAPI.getScanFolders()
-      setScanFolders(result.folders || [])
+      const folders = result.folders || []
+      setScanFolders(folders)
+      // 默认选中第一个目录
+      if (folders.length > 0 && !selectedFolder) {
+        setSelectedFolder(folders[0])
+      }
     } catch (error) {
       console.error("加载扫描目录失败:", error)
     }
-  }, [])
+  }, [selectedFolder])
 
   // 加载已保存的扫描目录
   useEffect(() => {
@@ -50,9 +57,17 @@ export function NavScan() {
     try {
       await window.electronAPI.removeScanFolder(folderPath)
       await loadScanFolders()
+      // 如果删除的是当前选中的，选中第一个
+      if (selectedFolder === folderPath) {
+        setSelectedFolder(scanFolders.length > 1 ? scanFolders[0] : "")
+      }
     } catch (error) {
       console.error("删除扫描目录失败:", error)
     }
+  }
+
+  const handleSelectFolder = (folderPath: string) => {
+    setSelectedFolder(folderPath)
   }
 
   return (
@@ -76,11 +91,18 @@ export function NavScan() {
           <SidebarMenu>
             {scanFolders.map((folderPath) => {
               const folderName = folderPath.split('/').pop() || folderPath
+              const isSelected = selectedFolder === folderPath
               return (
                 <SidebarMenuItem key={folderPath}>
                   <SidebarMenuSub>
                     <SidebarMenuSubItem>
-                      <SidebarMenuSubButton className="group/data-[collapsible=icon]:hidden">
+                      <SidebarMenuSubButton
+                        className={cn(
+                          "group/data-[collapsible=icon]:hidden",
+                          isSelected && "bg-accent"
+                        )}
+                        onClick={() => handleSelectFolder(folderPath)}
+                      >
                         <FolderIcon className="h-4 w-4" />
                         <span className="truncate flex-1" title={folderPath}>{folderName}</span>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -88,7 +110,10 @@ export function NavScan() {
                             variant="ghost"
                             size="icon"
                             className="h-5 w-5"
-                            onClick={() => handleRemoveFolder(folderPath)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleRemoveFolder(folderPath)
+                            }}
                             title="删除"
                           >
                             <Trash2Icon className="h-3 w-3" />
