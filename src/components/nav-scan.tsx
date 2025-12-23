@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button"
 
 export function NavScan() {
   const [scanFolders, setScanFolders] = useState<string[]>([])
-  const [selectedFolder, setSelectedFolder] = useState<string>("")
+  const [selectedFolder, setSelectedFolder] = useState<string>("全部") // 默认选中"全部"
   const isInitializedRef = useRef(false)
 
   // 加载已保存的扫描目录
@@ -24,9 +24,9 @@ export function NavScan() {
       const result = await window.electronAPI.getScanFolders()
       const folders = result.folders || []
       setScanFolders(folders)
-      // 只在首次加载时设置默认选中的目录
-      if (!isInitializedRef.current && folders.length > 0) {
-        setSelectedFolder(folders[0])
+      // 首次加载时触发一次过滤，显示所有项目
+      if (!isInitializedRef.current) {
+        window.dispatchEvent(new CustomEvent('filter-projects-by-folder', { detail: '' }))
         isInitializedRef.current = true
       }
     } catch (error) {
@@ -71,6 +71,9 @@ export function NavScan() {
 
   const handleSelectFolder = (folderPath: string) => {
     setSelectedFolder(folderPath)
+    // 如果选中"全部"，传递空字符串；否则传递目录路径
+    const filterValue = folderPath === '全部' ? '' : folderPath
+    window.dispatchEvent(new CustomEvent('filter-projects-by-folder', { detail: filterValue }))
   }
 
   return (
@@ -92,6 +95,24 @@ export function NavScan() {
         {/* 显示已保存的扫描目录 */}
         {scanFolders.length > 0 && (
           <SidebarMenu>
+            {/* "全部"选项 */}
+            <SidebarMenuItem>
+              <SidebarMenuSub>
+                <SidebarMenuSubItem>
+                  <SidebarMenuSubButton
+                    className={cn(
+                      "group/data-[collapsible=icon]:hidden",
+                      selectedFolder === "全部" && "bg-accent"
+                    )}
+                    onClick={() => handleSelectFolder("全部")}
+                  >
+                    <FolderIcon className="h-4 w-4" />
+                    <span className="flex-1">全部</span>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+              </SidebarMenuSub>
+            </SidebarMenuItem>
+
             {scanFolders.map((folderPath) => {
               const folderName = folderPath.split('/').pop() || folderPath
               const isSelected = selectedFolder === folderPath

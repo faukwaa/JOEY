@@ -18,6 +18,7 @@ import {
 
 export function ProjectListPage() {
   const [projects, setProjects] = useState<Project[]>([])
+  const [allProjects, setAllProjects] = useState<Project[]>([]) // 保存所有项目
   const [loading, setLoading] = useState(true)
   const [scanning, setScanning] = useState(false)
   const [sortBy, setSortBy] = useState<'name' | 'createdAt' | 'updatedAt' | 'size'>('updatedAt')
@@ -80,6 +81,7 @@ export function ProjectListPage() {
               id: encodeURIComponent(p.path),
               name: p.name,
               path: p.path,
+              scanFolder: folder, // 记录项目来自哪个扫描目录
               createdAt: stats?.createdAt ? new Date(stats.createdAt) : new Date(),
               updatedAt: stats?.updatedAt ? new Date(stats.updatedAt) : new Date(),
               addedAt: new Date(),
@@ -117,6 +119,7 @@ export function ProjectListPage() {
 
       if (folders.length === 0) {
         // 没有配置扫描目录，显示空状态
+        setAllProjects([])
         setProjects([])
         return
       }
@@ -132,7 +135,9 @@ export function ProjectListPage() {
 
           if (foldersMatch) {
             console.log('从缓存加载项目列表')
-            setProjects(convertCachedProjects(cache.projects))
+            const cachedProjects = convertCachedProjects(cache.projects)
+            setAllProjects(cachedProjects)
+            setProjects(cachedProjects)
             return
           }
         }
@@ -141,9 +146,11 @@ export function ProjectListPage() {
       // 没有缓存或强制扫描，进行扫描
       console.log(forceScan ? '强制扫描项目...' : '首次扫描项目...')
       const scannedProjects = await scanProjects(folders)
+      setAllProjects(scannedProjects)
       setProjects(scannedProjects)
     } catch (error) {
       console.error('Failed to load projects:', error)
+      setAllProjects([])
       setProjects([])
     } finally {
       setLoading(false)
@@ -177,6 +184,26 @@ export function ProjectListPage() {
       window.removeEventListener('refresh-projects', handleRefresh)
     }
   }, [loadProjects])
+
+  // 监听过滤事件
+  useEffect(() => {
+    const handleFilter = (event: Event) => {
+      const customEvent = event as CustomEvent<string>
+      const folder = customEvent.detail
+      // 过滤项目：如果选中了目录，只显示该目录下的项目；否则显示所有项目
+      if (folder) {
+        const filtered = allProjects.filter(p => p.scanFolder === folder)
+        setProjects(filtered)
+      } else {
+        setProjects(allProjects)
+      }
+    }
+
+    window.addEventListener('filter-projects-by-folder', handleFilter)
+    return () => {
+      window.removeEventListener('filter-projects-by-folder', handleFilter)
+    }
+  }, [allProjects])
 
   // 排序项目
   const sortedProjects = [...projects].sort((a, b) => {

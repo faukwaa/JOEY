@@ -3,6 +3,7 @@ export interface Project {
   id: string;                    // 唯一标识
   name: string;                  // 项目名称
   path: string;                  // 项目绝对路径
+  scanFolder?: string;           // 所属的扫描目录
 
   // 时间信息
   createdAt: Date;               // 创建时间
