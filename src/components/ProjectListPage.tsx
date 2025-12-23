@@ -11,7 +11,6 @@ import {
 import {
   SortAscIcon,
   SortDescIcon,
-  LoaderIcon,
   RefreshCwIcon,
 } from 'lucide-react'
 
@@ -323,17 +322,6 @@ export function ProjectListPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold">我的项目</h1>
-            {scanning && (
-              <div className="flex items-center gap-2 text-sm">
-                <LoaderIcon className="h-4 w-4 animate-spin text-muted-foreground" />
-                <span className="text-muted-foreground">{scanProgress.message || '扫描中...'}</span>
-                {scanProgress.total > 0 && (
-                  <span className="text-muted-foreground">
-                    ({scanProgress.current}/{scanProgress.total})
-                  </span>
-                )}
-              </div>
-            )}
           </div>
           <div className="flex items-center gap-2">
             {/* 排序 */}
@@ -378,7 +366,7 @@ export function ProjectListPage() {
               variant="outline"
               size="sm"
               onClick={handleScanAll}
-              disabled={!currentScanFolder}
+              disabled={!scanning && !currentScanFolder}
             >
               {scanning ? (
                 <>
@@ -404,14 +392,14 @@ export function ProjectListPage() {
                 <span> ({scanProgress.current}/{scanProgress.total})</span>
               )}
             </div>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden border border-gray-300 dark:border-gray-600">
+            <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
               {scanProgress.total > 0 ? (
                 <div
-                  className="bg-blue-500 h-full transition-all duration-300 ease-out"
+                  className="bg-primary h-full transition-all duration-300 ease-out"
                   style={{ width: `${Math.round((scanProgress.current / scanProgress.total) * 100)}%` }}
                 />
               ) : (
-                <div className="bg-blue-500 h-full animate-pulse" style={{ width: '30%' }} />
+                <div className="bg-primary h-full animate-pulse" style={{ width: '30%' }} />
               )}
             </div>
           </div>
