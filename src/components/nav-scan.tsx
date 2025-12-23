@@ -1,8 +1,9 @@
 import { ScanIcon, FolderIcon, Trash2Icon, PlusIcon } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
 import {
+  SidebarGroup,
+  SidebarGroupContent,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubButton,
@@ -66,47 +67,59 @@ export function NavScan() {
   }
 
   return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <SidebarMenuButton onClick={handleAddFolder}>
-          <PlusIcon />
-          <span>添加扫描目录</span>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
+    <SidebarGroup>
+      <SidebarGroupContent>
+        {/* 添加扫描目录按钮 */}
+        <div className="px-2 pb-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-start"
+            onClick={handleAddFolder}
+          >
+            <PlusIcon className="h-4 w-4 mr-2" />
+            添加扫描目录
+          </Button>
+        </div>
 
-      {/* 显示已保存的扫描目录 */}
-      {scanFolders.length > 0 && (
-        <SidebarMenuSub>
-          {scanFolders.map((folderPath) => (
-            <SidebarMenuSubItem key={folderPath}>
-              <SidebarMenuSubButton className="group/data-[collapsible=icon]:hidden">
-                <FolderIcon className="h-4 w-4" />
-                <span className="truncate flex-1">{folderPath}</span>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5"
-                    onClick={() => handleScan(folderPath)}
-                    title="扫描"
-                  >
-                    <ScanIcon className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5"
-                    onClick={() => handleRemoveFolder(folderPath)}
-                    title="删除"
-                  >
-                    <Trash2Icon className="h-3 w-3" />
-                  </Button>
-                </div>
-              </SidebarMenuSubButton>
-            </SidebarMenuSubItem>
-          ))}
-        </SidebarMenuSub>
-      )}
-    </SidebarMenu>
+        {/* 显示已保存的扫描目录 */}
+        {scanFolders.length > 0 && (
+          <SidebarMenu>
+            {scanFolders.map((folderPath) => (
+              <SidebarMenuItem key={folderPath}>
+                <SidebarMenuSub>
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton className="group/data-[collapsible=icon]:hidden">
+                      <FolderIcon className="h-4 w-4" />
+                      <span className="truncate flex-1">{folderPath}</span>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5"
+                          onClick={() => handleScan(folderPath)}
+                          title="扫描"
+                        >
+                          <ScanIcon className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5"
+                          onClick={() => handleRemoveFolder(folderPath)}
+                          title="删除"
+                        >
+                          <Trash2Icon className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                </SidebarMenuSub>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        )}
+      </SidebarGroupContent>
+    </SidebarGroup>
   )
 }
