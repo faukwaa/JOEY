@@ -399,6 +399,21 @@ export function ProjectListPage() {
               : '在左侧选择一个扫描目录'
             }
           </p>
+          {currentScanFolder && (
+            <Button size="sm" onClick={handleScanAll} disabled={scanning}>
+              {scanning ? (
+                <>
+                  <RefreshCwIcon className="h-4 w-4 mr-2 animate-spin" />
+                  停止扫描
+                </>
+              ) : (
+                <>
+                  <RefreshCwIcon className="h-4 w-4 mr-2" />
+                  立即扫描
+                </>
+              )}
+            </Button>
+          )}
         </div>
       ) : (
         <ProjectGrid
