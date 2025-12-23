@@ -121,39 +121,145 @@ interface Project {
   description?: string
 }
 
+// 检查目录是否是项目目录
+function isProjectDirectory(dir: string): boolean {
+  // 检查是否是 git 仓库
+  const gitDir = join(dir, '.git')
+  if (existsSync(gitDir)) {
+    return true
+  }
+
+  // 检查是否有常见的项目文件
+  const projectIndicators = [
+    'package.json',
+    'package-lock.json',
+    'pnpm-lock.yaml',
+    'yarn.lock',
+    'bun.lockb',
+    'Cargo.toml',
+    'go.mod',
+    'pom.xml',
+    'build.gradle',
+    'requirements.txt',
+    'pyproject.toml',
+    'Gemfile',
+    'composer.json',
+    '.gitignore',
+  ]
+
+  for (const indicator of projectIndicators) {
+    if (existsSync(join(dir, indicator))) {
+      return true
+    }
+  }
+
+  return false
+}
+
+// 应该跳过的目录
+function shouldSkipDirectory(dirName: string): boolean {
+  const skipDirs = [
+    'node_modules',
+    '.git',
+    'dist',
+    'build',
+    'out',
+    'target',
+    'bin',
+    'obj',
+    '.next',
+    '.nuxt',
+    'coverage',
+    '__pycache__',
+    'venv',
+    'env',
+    '.venv',
+    'site-packages',
+    '.vscode',
+    '.idea',
+    '.DS_Store',
+    'tmp',
+    'temp',
+  ]
+
+  return skipDirs.includes(dirName) || dirName.startsWith('.')
+}
+
+// 递归扫描目录查找项目
+function scanDirectoryRecursively(
+  dir: string,
+  projects: Project[],
+  maxDepth: number = 5,
+  currentDepth: number = 0
+): void {
+  // 达到最大深度，停止扫描
+  if (currentDepth >= maxDepth) {
+    return
+  }
+
+  // 跳过不存在的目录
+  if (!existsSync(dir)) {
+    return
+  }
+
+  try {
+    const entries = readdirSync(dir, { withFileTypes: true })
+
+    for (const entry of entries) {
+      // 跳过文件和隐藏目录
+      if (!entry.isDirectory() || shouldSkipDirectory(entry.name)) {
+        continue
+      }
+
+      const fullPath = join(dir, entry.name)
+
+      // 检查是否是项目目录
+      if (isProjectDirectory(fullPath)) {
+        projects.push({
+          name: entry.name,
+          path: fullPath,
+          description: 'Project'
+        })
+      } else {
+        // 如果不是项目目录，递归扫描子目录
+        scanDirectoryRecursively(fullPath, projects, maxDepth, currentDepth + 1)
+      }
+    }
+  } catch (error) {
+    console.error(`Error scanning directory ${dir}:`, error)
+  }
+}
+
 ipcMain.handle('scan-projects', async (_, folders: string[]) => {
   const projects: Project[] = []
 
   for (const folder of folders) {
     if (!existsSync(folder)) continue
 
+    // 首先检查根目录本身是否是项目
+    if (isProjectDirectory(folder)) {
+      const folderName = folder.split('/').pop() || folder
+      projects.push({
+        name: folderName,
+        path: folder,
+        description: 'Project'
+      })
+    }
+
+    // 递归扫描子目录
     try {
-      const entries = readdirSync(folder, { withFileTypes: true })
-
-      for (const entry of entries) {
-        if (entry.isDirectory()) {
-          const projectPath = join(folder, entry.name)
-
-          // Check if it's a git repository
-          const gitDir = join(projectPath, '.git')
-          if (existsSync(gitDir)) {
-            // Check for package.json or other project indicators
-            const packageJsonPath = join(projectPath, 'package.json')
-
-            projects.push({
-              name: entry.name,
-              path: projectPath,
-              description: existsSync(packageJsonPath) ? 'Node.js Project' : undefined
-            })
-          }
-        }
-      }
+      scanDirectoryRecursively(folder, projects, 5, 0)
     } catch (error) {
       console.error(`Error scanning folder ${folder}:`, error)
     }
   }
 
-  return { projects }
+  // 去重（基于路径）
+  const uniqueProjects = projects.filter((project, index, self) =>
+    index === self.findIndex((p) => p.path === project.path)
+  )
+
+  return { projects: uniqueProjects }
 })
 
 ipcMain.handle('get-git-info', async (_, projectPath: string) => {

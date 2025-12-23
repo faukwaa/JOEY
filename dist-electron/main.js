@@ -78,31 +78,110 @@ app.on("activate", () => {
     createWindow();
   }
 });
+function isProjectDirectory(dir) {
+  const gitDir = join(dir, ".git");
+  if (existsSync(gitDir)) {
+    return true;
+  }
+  const projectIndicators = [
+    "package.json",
+    "package-lock.json",
+    "pnpm-lock.yaml",
+    "yarn.lock",
+    "bun.lockb",
+    "Cargo.toml",
+    "go.mod",
+    "pom.xml",
+    "build.gradle",
+    "requirements.txt",
+    "pyproject.toml",
+    "Gemfile",
+    "composer.json",
+    ".gitignore"
+  ];
+  for (const indicator of projectIndicators) {
+    if (existsSync(join(dir, indicator))) {
+      return true;
+    }
+  }
+  return false;
+}
+function shouldSkipDirectory(dirName) {
+  const skipDirs = [
+    "node_modules",
+    ".git",
+    "dist",
+    "build",
+    "out",
+    "target",
+    "bin",
+    "obj",
+    ".next",
+    ".nuxt",
+    "coverage",
+    "__pycache__",
+    "venv",
+    "env",
+    ".venv",
+    "site-packages",
+    ".vscode",
+    ".idea",
+    ".DS_Store",
+    "tmp",
+    "temp"
+  ];
+  return skipDirs.includes(dirName) || dirName.startsWith(".");
+}
+function scanDirectoryRecursively(dir, projects, maxDepth = 5, currentDepth = 0) {
+  if (currentDepth >= maxDepth) {
+    return;
+  }
+  if (!existsSync(dir)) {
+    return;
+  }
+  try {
+    const entries = readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isDirectory() || shouldSkipDirectory(entry.name)) {
+        continue;
+      }
+      const fullPath = join(dir, entry.name);
+      if (isProjectDirectory(fullPath)) {
+        projects.push({
+          name: entry.name,
+          path: fullPath,
+          description: "Project"
+        });
+      } else {
+        scanDirectoryRecursively(fullPath, projects, maxDepth, currentDepth + 1);
+      }
+    }
+  } catch (error) {
+    console.error(`Error scanning directory ${dir}:`, error);
+  }
+}
 ipcMain.handle("scan-projects", async (_, folders) => {
   const projects = [];
   for (const folder of folders) {
     if (!existsSync(folder)) continue;
+    if (isProjectDirectory(folder)) {
+      const folderName = folder.split("/").pop() || folder;
+      projects.push({
+        name: folderName,
+        path: folder,
+        description: "Project"
+      });
+    }
     try {
-      const entries = readdirSync(folder, { withFileTypes: true });
-      for (const entry of entries) {
-        if (entry.isDirectory()) {
-          const projectPath = join(folder, entry.name);
-          const gitDir = join(projectPath, ".git");
-          if (existsSync(gitDir)) {
-            const packageJsonPath = join(projectPath, "package.json");
-            projects.push({
-              name: entry.name,
-              path: projectPath,
-              description: existsSync(packageJsonPath) ? "Node.js Project" : void 0
-            });
-          }
-        }
-      }
+      scanDirectoryRecursively(folder, projects, 5, 0);
     } catch (error) {
       console.error(`Error scanning folder ${folder}:`, error);
     }
   }
-  return { projects };
+  const uniqueProjects = projects.filter(
+    (project, index, self) => index === self.findIndex((p) => p.path === project.path)
+  );
+  return { projects: uniqueProjects };
 });
 ipcMain.handle("get-git-info", async (_, projectPath) => {
   try {
