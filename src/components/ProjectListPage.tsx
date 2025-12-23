@@ -220,7 +220,11 @@ export function ProjectListPage() {
     // 停止加载状态，开始扫描状态
     setLoading(false)
     setScanning(true)
-    setScanProgress({ stage: 'starting', current: 0, total: 0, message: `扫描 ${currentScanFolder}...` })
+    setScanProgress({ stage: 'starting', current: 0, total: 0, message: `准备扫描 ${currentScanFolder.split('/').pop()}...` })
+
+    // 等待 UI 更新，确保进度状态能被显示
+    await new Promise(resolve => setTimeout(resolve, 50))
+
     try {
       // 只扫描选中的目录
       const scanResult = await window.electronAPI.scanProjects([currentScanFolder])
