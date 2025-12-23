@@ -425,6 +425,8 @@ ipcMain.handle('remove-scan-folder', async (_, folder: string) => {
 ipcMain.handle('get-project-stats', async (_, projectPath: string) => {
   try {
     let size = 0
+    let createdAt = Date.now()
+    let updatedAt = Date.now()
 
     // 使用系统 du 命令获取目录大小（比递归遍历快得多）
     try {
@@ -433,15 +435,17 @@ ipcMain.handle('get-project-stats', async (_, projectPath: string) => {
         // macOS 的 du 不支持 -b，使用 -k 然后转换
         const duArgs = process.platform === 'darwin' ? ['-sk', projectPath] : ['-sb', projectPath]
         const { stdout: output } = await execAsync(`du ${duArgs.join(' ')}`, {
-          cwd: projectPath,
           maxBuffer: 10 * 1024 * 1024, // 10MB buffer
         })
+
+        console.log(`du output for ${projectPath}:`, output)
 
         // 输出格式: "12345\tpath" 或 "12345 path"
         const match = output.trim().match(/^(\d+)/)
         if (match) {
           const sizeInKB = parseInt(match[1], 10)
           size = process.platform === 'darwin' ? sizeInKB * 1024 : sizeInKB
+          console.log(`Calculated size: ${size}`)
         }
       } else if (process.platform === 'win32') {
         // Windows: 使用 PowerShell 的 Get-ChildItem
@@ -470,6 +474,13 @@ ipcMain.handle('get-project-stats', async (_, projectPath: string) => {
               const fullPath = join(projectPath, entry.name as unknown as string)
               const stats = await statAsync(fullPath)
               size += stats.size
+              // 获取最早的创建时间和最新的修改时间
+              if (stats.birthtimeMs < createdAt) {
+                createdAt = stats.birthtimeMs
+              }
+              if (stats.mtimeMs > updatedAt) {
+                updatedAt = stats.mtimeMs
+              }
             } catch {
               // 跳过无法访问的文件
             }
@@ -498,13 +509,18 @@ ipcMain.handle('get-project-stats', async (_, projectPath: string) => {
       size,
       hasNodeModules,
       packageManager,
+      createdAt: new Date(createdAt).toISOString(),
+      updatedAt: new Date(updatedAt).toISOString(),
     }
-  } catch {
+  } catch (error) {
+    console.error('Error getting project stats:', error)
     // 静默处理错误，不打印到控制台
     return {
       size: 0,
       hasNodeModules: false,
       packageManager: undefined,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     }
   }
 })

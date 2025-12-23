@@ -304,18 +304,21 @@ ipcMain.handle("remove-scan-folder", async (_, folder) => {
 ipcMain.handle("get-project-stats", async (_, projectPath) => {
   try {
     let size = 0;
+    let createdAt = Date.now();
+    let updatedAt = Date.now();
     try {
       if (process.platform === "darwin" || process.platform === "linux") {
         const duArgs = process.platform === "darwin" ? ["-sk", projectPath] : ["-sb", projectPath];
         const { stdout: output } = await execAsync(`du ${duArgs.join(" ")}`, {
-          cwd: projectPath,
           maxBuffer: 10 * 1024 * 1024
           // 10MB buffer
         });
+        console.log(`du output for ${projectPath}:`, output);
         const match = output.trim().match(/^(\d+)/);
         if (match) {
           const sizeInKB = parseInt(match[1], 10);
           size = process.platform === "darwin" ? sizeInKB * 1024 : sizeInKB;
+          console.log(`Calculated size: ${size}`);
         }
       } else if (process.platform === "win32") {
         const { stdout: output } = await execAsync(
@@ -339,6 +342,12 @@ ipcMain.handle("get-project-stats", async (_, projectPath) => {
               const fullPath = join(projectPath, entry.name);
               const stats = await statAsync(fullPath);
               size += stats.size;
+              if (stats.birthtimeMs < createdAt) {
+                createdAt = stats.birthtimeMs;
+              }
+              if (stats.mtimeMs > updatedAt) {
+                updatedAt = stats.mtimeMs;
+              }
             } catch {
             }
           }
@@ -360,13 +369,18 @@ ipcMain.handle("get-project-stats", async (_, projectPath) => {
     return {
       size,
       hasNodeModules,
-      packageManager
+      packageManager,
+      createdAt: new Date(createdAt).toISOString(),
+      updatedAt: new Date(updatedAt).toISOString()
     };
-  } catch {
+  } catch (error) {
+    console.error("Error getting project stats:", error);
     return {
       size: 0,
       hasNodeModules: false,
-      packageManager: void 0
+      packageManager: void 0,
+      createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+      updatedAt: (/* @__PURE__ */ new Date()).toISOString()
     };
   }
 });

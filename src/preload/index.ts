@@ -55,6 +55,8 @@ declare global {
         size: number
         hasNodeModules: boolean
         packageManager?: 'npm' | 'yarn' | 'pnpm' | 'bun'
+        createdAt: string
+        updatedAt: string
       }>
       // 扫描进度事件
       onScanProgress: (callback: (progress: { stage: string; current: number; total: number; message: string }) => void) => () => void
