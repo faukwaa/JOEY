@@ -357,20 +357,70 @@ ipcMain.handle('remove-scan-folder', async (_, folder: string) => {
 // 获取项目统计信息
 ipcMain.handle('get-project-stats', async (_, projectPath: string) => {
   try {
+    // 需要跳过的目录（除了 node_modules 和 .git）
+    const skipDirs = new Set<string>([
+      'node_modules',
+      '.git',
+      'dist',
+      'build',
+      'out',
+      'target',
+      'bin',
+      'obj',
+      '.next',
+      '.nuxt',
+      'coverage',
+      '__pycache__',
+      'venv',
+      'env',
+      '.venv',
+      'site-packages',
+      '.vscode',
+      '.idea',
+      'tmp',
+      'temp',
+      'vendor', // PHP composer 依赖
+      'storage', // Laravel storage 目录
+    ])
+
     const calculateSize = (dir: string): number => {
       let size = 0
-      const entries = readdirSync(dir, { withFileTypes: true })
+      let entries: ReturnType<typeof readdirSync>
+
+      try {
+        entries = readdirSync(dir, { withFileTypes: true })
+      } catch {
+        // 无法读取目录，跳过
+        return 0
+      }
 
       for (const entry of entries) {
-        const fullPath = join(dir, entry.name)
-        if (entry.isDirectory()) {
-          // 跳过 node_modules 和 .git 以提高性能
-          if (entry.name !== 'node_modules' && entry.name !== '.git') {
-            size += calculateSize(fullPath)
+        const entryName = entry.name as unknown as string
+        const fullPath = join(dir, entryName)
+
+        // 跳过符号链接
+        try {
+          if (entry.isSymbolicLink()) {
+            continue
           }
+        } catch {
+          continue
+        }
+
+        if (entry.isDirectory()) {
+          // 跳过常见的大目录
+          if (skipDirs.has(entryName)) {
+            continue
+          }
+          size += calculateSize(fullPath)
         } else {
-          const stats = statSync(fullPath)
-          size += stats.size
+          try {
+            const stats = statSync(fullPath)
+            size += stats.size
+          } catch {
+            // 无法获取文件信息，跳过
+            continue
+          }
         }
       }
       return size
@@ -395,8 +445,8 @@ ipcMain.handle('get-project-stats', async (_, projectPath: string) => {
       hasNodeModules,
       packageManager,
     }
-  } catch (error) {
-    console.error('Error getting project stats:', error)
+  } catch {
+    // 静默处理错误，不打印到控制台
     return {
       size: 0,
       hasNodeModules: false,

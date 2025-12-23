@@ -251,18 +251,62 @@ ipcMain.handle("remove-scan-folder", async (_, folder) => {
 });
 ipcMain.handle("get-project-stats", async (_, projectPath) => {
   try {
+    const skipDirs = /* @__PURE__ */ new Set([
+      "node_modules",
+      ".git",
+      "dist",
+      "build",
+      "out",
+      "target",
+      "bin",
+      "obj",
+      ".next",
+      ".nuxt",
+      "coverage",
+      "__pycache__",
+      "venv",
+      "env",
+      ".venv",
+      "site-packages",
+      ".vscode",
+      ".idea",
+      "tmp",
+      "temp",
+      "vendor",
+      // PHP composer 依赖
+      "storage"
+      // Laravel storage 目录
+    ]);
     const calculateSize = (dir) => {
       let size = 0;
-      const entries = readdirSync(dir, { withFileTypes: true });
+      let entries;
+      try {
+        entries = readdirSync(dir, { withFileTypes: true });
+      } catch {
+        return 0;
+      }
       for (const entry of entries) {
-        const fullPath = join(dir, entry.name);
-        if (entry.isDirectory()) {
-          if (entry.name !== "node_modules" && entry.name !== ".git") {
-            size += calculateSize(fullPath);
+        const entryName = entry.name;
+        const fullPath = join(dir, entryName);
+        try {
+          if (entry.isSymbolicLink()) {
+            continue;
           }
+        } catch {
+          continue;
+        }
+        if (entry.isDirectory()) {
+          if (skipDirs.has(entryName)) {
+            continue;
+          }
+          size += calculateSize(fullPath);
         } else {
-          const stats = statSync(fullPath);
-          size += stats.size;
+          try {
+            const stats = statSync(fullPath);
+            size += stats.size;
+          } catch {
+            continue;
+          }
         }
       }
       return size;
@@ -283,8 +327,7 @@ ipcMain.handle("get-project-stats", async (_, projectPath) => {
       hasNodeModules,
       packageManager
     };
-  } catch (error) {
-    console.error("Error getting project stats:", error);
+  } catch {
     return {
       size: 0,
       hasNodeModules: false,
