@@ -193,6 +193,10 @@ ipcMain.handle("scan-projects", async (_, folders) => {
 });
 ipcMain.handle("get-git-info", async (_, projectPath) => {
   try {
+    const gitDir = join(projectPath, ".git");
+    if (!existsSync(gitDir)) {
+      return { branch: null, status: "no-git", changes: 0 };
+    }
     const branch = execSync("git rev-parse --abbrev-ref HEAD", {
       cwd: projectPath,
       encoding: "utf-8"
@@ -207,9 +211,8 @@ ipcMain.handle("get-git-info", async (_, projectPath) => {
       status: isClean ? "clean" : "modified",
       changes: status.trim().split("\n").filter(Boolean).length
     };
-  } catch (error) {
-    console.error("Error getting git info:", error);
-    return { branch: "unknown", status: "error" };
+  } catch {
+    return { branch: null, status: "error", changes: 0 };
   }
 });
 ipcMain.handle("open-project-folder", async (_, projectPath) => {

@@ -277,6 +277,12 @@ ipcMain.handle('scan-projects', async (_, folders: string[]) => {
 
 ipcMain.handle('get-git-info', async (_, projectPath: string) => {
   try {
+    // 检查是否是 Git 仓库
+    const gitDir = join(projectPath, '.git')
+    if (!existsSync(gitDir)) {
+      return { branch: null, status: 'no-git', changes: 0 }
+    }
+
     // Get current branch
     const branch = execSync('git rev-parse --abbrev-ref HEAD', {
       cwd: projectPath,
@@ -296,9 +302,9 @@ ipcMain.handle('get-git-info', async (_, projectPath: string) => {
       status: isClean ? 'clean' : 'modified',
       changes: status.trim().split('\n').filter(Boolean).length
     }
-  } catch (error) {
-    console.error('Error getting git info:', error)
-    return { branch: 'unknown', status: 'error' }
+  } catch {
+    // 静默处理错误，不打印到控制台
+    return { branch: null, status: 'error', changes: 0 }
   }
 })
 

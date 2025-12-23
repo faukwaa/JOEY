@@ -32,7 +32,7 @@ declare global {
       on: (channel: string, callback: (...args: unknown[]) => void) => void
       invoke: (channel: string, ...args: unknown[]) => Promise<unknown>
       scanProjects: (folders: string[]) => Promise<{ projects: unknown[] }>
-      getGitInfo: (projectPath: string) => Promise<{ branch: string; status: string; changes?: number }>
+      getGitInfo: (projectPath: string) => Promise<{ branch: string | null; status: 'clean' | 'modified' | 'error' | 'no-git'; changes: number }>
       openProjectFolder: (projectPath: string) => Promise<{ success: boolean }>
       selectFolders: () => Promise<{ folders: string[] }>
       saveScanFolders: (folders: string[]) => Promise<{ success: boolean; error?: string }>

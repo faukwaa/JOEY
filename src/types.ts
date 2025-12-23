@@ -17,7 +17,7 @@ export interface Project {
   gitRemote?: string;            // 远程仓库地址
   gitBranch?: string;            // 当前分支
   lastCommit?: string;           // 最后提交信息
-  gitStatus?: 'clean' | 'modified' | 'error'; // Git 工作区状态
+  gitStatus?: 'clean' | 'modified' | 'error' | 'no-git'; // Git 工作区状态
   gitChanges?: number;           // 未提交的变更数量
 
   // 包信息
