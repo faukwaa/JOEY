@@ -231,7 +231,7 @@ export function ProjectListPage() {
             {sortBy === 'updatedAt' && '按更新时间'}
           </Button>
 
-          {/* 刷新 */}
+          {/* 扫描 */}
           <Button
             variant="outline"
             size="sm"
@@ -239,7 +239,7 @@ export function ProjectListPage() {
             disabled={scanning}
           >
             <RefreshCwIcon className={`h-4 w-4 mr-2 ${scanning ? 'animate-spin' : ''}`} />
-            刷新
+            扫描
           </Button>
 
           {/* 添加项目 */}

@@ -1,4 +1,4 @@
-import { ScanIcon, FolderIcon, Trash2Icon, PlusIcon } from "lucide-react"
+import { FolderIcon, Trash2Icon, PlusIcon } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
 import {
   SidebarGroup,
@@ -55,17 +55,6 @@ export function NavScan() {
     }
   }
 
-  const handleScan = async (folderPath: string) => {
-    try {
-      const result = await window.electronAPI.scanProjects([folderPath])
-      console.log("扫描结果:", result.projects)
-      // 触发刷新事件，通知 ProjectListPage 更新项目列表
-      window.dispatchEvent(new CustomEvent('refresh-projects'))
-    } catch (error) {
-      console.error("扫描失败:", error)
-    }
-  }
-
   return (
     <SidebarGroup>
       <SidebarGroupContent>
@@ -95,15 +84,6 @@ export function NavScan() {
                         <FolderIcon className="h-4 w-4" />
                         <span className="truncate flex-1" title={folderPath}>{folderName}</span>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-5 w-5"
-                            onClick={() => handleScan(folderPath)}
-                            title="扫描"
-                          >
-                            <ScanIcon className="h-3 w-3" />
-                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"
