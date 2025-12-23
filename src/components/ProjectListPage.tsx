@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import type { Project } from '@/types'
 import { ProjectGrid } from '@/components/ProjectCard'
 import { Button } from '@/components/ui/button'
@@ -23,24 +23,42 @@ export function ProjectListPage() {
   const [sortBy, setSortBy] = useState<'name' | 'createdAt' | 'updatedAt' | 'size'>('updatedAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
-  // 加载项目列表
-  useEffect(() => {
-    loadProjects()
+  const loadMockProjects = useCallback(() => {
+    const mockProjects: Project[] = [
+      {
+        id: '1',
+        name: 'project-mng',
+        path: '/Users/zhoutao/code/electron/projectMng',
+        createdAt: new Date('2024-01-15'),
+        updatedAt: new Date(),
+        addedAt: new Date('2024-01-15'),
+        size: 1024 * 1024 * 256,
+        hasNodeModules: true,
+        gitBranch: 'main',
+        gitStatus: 'clean',
+        packageManager: 'pnpm',
+        favorite: true,
+      },
+      {
+        id: '2',
+        name: 'my-blog',
+        path: '/Users/zhoutao/code/electron/my-blog',
+        createdAt: new Date('2024-02-01'),
+        updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+        addedAt: new Date('2024-02-01'),
+        size: 1024 * 1024 * 128,
+        hasNodeModules: true,
+        gitBranch: 'main',
+        gitStatus: 'modified',
+        gitChanges: 3,
+        packageManager: 'npm',
+        favorite: false,
+      },
+    ]
+    setProjects(mockProjects)
   }, [])
 
-  // 监听自定义事件来刷新项目列表
-  useEffect(() => {
-    const handleRefresh = () => {
-      loadProjects()
-    }
-
-    window.addEventListener('refresh-projects', handleRefresh)
-    return () => {
-      window.removeEventListener('refresh-projects', handleRefresh)
-    }
-  }, [])
-
-  const loadProjects = async () => {
+  const loadProjects = useCallback(async () => {
     setLoading(true)
     try {
       // 获取已保存的扫描目录
@@ -77,7 +95,7 @@ export function ProjectListPage() {
                 size: stats?.size || 0,
                 hasNodeModules: stats?.hasNodeModules || false,
                 gitBranch: gitInfo.branch,
-                gitStatus: gitInfo.status as 'clean' | 'modified' | 'error',
+                gitStatus: gitInfo.status as 'clean' | 'modified' | 'error' | 'no-git',
                 gitChanges: gitInfo.changes,
                 packageManager: stats?.packageManager,
                 favorite: false,
@@ -96,42 +114,24 @@ export function ProjectListPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [loadMockProjects])
 
-  const loadMockProjects = () => {
-    const mockProjects: Project[] = [
-      {
-        id: '1',
-        name: 'project-mng',
-        path: '/Users/zhoutao/code/electron/projectMng',
-        createdAt: new Date('2024-01-15'),
-        updatedAt: new Date(),
-        addedAt: new Date('2024-01-15'),
-        size: 1024 * 1024 * 256,
-        hasNodeModules: true,
-        gitBranch: 'main',
-        gitStatus: 'clean',
-        packageManager: 'pnpm',
-        favorite: true,
-      },
-      {
-        id: '2',
-        name: 'my-blog',
-        path: '/Users/zhoutao/code/my-blog',
-        createdAt: new Date('2024-02-01'),
-        updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-        addedAt: new Date('2024-02-01'),
-        size: 1024 * 1024 * 128,
-        hasNodeModules: true,
-        gitBranch: 'main',
-        gitStatus: 'modified',
-        gitChanges: 3,
-        packageManager: 'npm',
-        favorite: false,
-      },
-    ]
-    setProjects(mockProjects)
-  }
+  // 加载项目列表
+  useEffect(() => {
+    loadProjects()
+  }, [loadProjects])
+
+  // 监听自定义事件来刷新项目列表
+  useEffect(() => {
+    const handleRefresh = () => {
+      loadProjects()
+    }
+
+    window.addEventListener('refresh-projects', handleRefresh)
+    return () => {
+      window.removeEventListener('refresh-projects', handleRefresh)
+    }
+  }, [loadProjects])
 
   // 排序项目
   const sortedProjects = [...projects].sort((a, b) => {
@@ -248,6 +248,9 @@ export function ProjectListPage() {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setSortBy('updatedAt')}>
                 按更新时间
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}>
+                {sortOrder === 'asc' ? '降序' : '升序'}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

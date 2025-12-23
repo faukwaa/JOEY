@@ -66,8 +66,8 @@ export function parseGitUrl(url: string): { host: string; owner: string; repo: s
   if (!url) return null;
 
   // 匹配 https://github.com/owner/repo.git 或 git@github.com:owner/repo.git
-  const httpsMatch = url.match(/https?:\/\/([^\/]+)\/([^\/]+)\/([^\/\.]+)/);
-  const sshMatch = url.match(/git@([^:]+):([^\/]+)\/([^\/\.]+)/);
+  const httpsMatch = url.match(/https?:\/\/([^/]+)\/([^/]+)\/([^/.]+)/)
+  const sshMatch = url.match(/git@([^:]+):([^/]+)\/([^/.]+)/)
 
   const match = httpsMatch || sshMatch;
   if (!match) return null;

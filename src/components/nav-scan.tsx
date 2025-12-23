@@ -1,5 +1,6 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { FolderIcon, Trash2Icon, PlusIcon } from "lucide-react"
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { cn } from "@/lib/utils"
 import {
   SidebarGroup,
@@ -15,6 +16,7 @@ import { Button } from "@/components/ui/button"
 export function NavScan() {
   const [scanFolders, setScanFolders] = useState<string[]>([])
   const [selectedFolder, setSelectedFolder] = useState<string>("")
+  const isInitializedRef = useRef(false)
 
   // 加载已保存的扫描目录
   const loadScanFolders = useCallback(async () => {
@@ -22,16 +24,17 @@ export function NavScan() {
       const result = await window.electronAPI.getScanFolders()
       const folders = result.folders || []
       setScanFolders(folders)
-      // 默认选中第一个目录
-      if (folders.length > 0 && !selectedFolder) {
+      // 只在首次加载时设置默认选中的目录
+      if (!isInitializedRef.current && folders.length > 0) {
         setSelectedFolder(folders[0])
+        isInitializedRef.current = true
       }
     } catch (error) {
       console.error("加载扫描目录失败:", error)
     }
-  }, [selectedFolder])
+  }, [])
 
-  // 加载已保存的扫描目录
+  // 组件挂载时加载扫描目录
   useEffect(() => {
     loadScanFolders()
   }, [loadScanFolders])
