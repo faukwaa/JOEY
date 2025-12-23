@@ -357,73 +357,58 @@ ipcMain.handle('remove-scan-folder', async (_, folder: string) => {
 // 获取项目统计信息
 ipcMain.handle('get-project-stats', async (_, projectPath: string) => {
   try {
-    // 需要跳过的目录（除了 node_modules 和 .git）
-    const skipDirs = new Set<string>([
-      'node_modules',
-      '.git',
-      'dist',
-      'build',
-      'out',
-      'target',
-      'bin',
-      'obj',
-      '.next',
-      '.nuxt',
-      'coverage',
-      '__pycache__',
-      'venv',
-      'env',
-      '.venv',
-      'site-packages',
-      '.vscode',
-      '.idea',
-      'tmp',
-      'temp',
-      'vendor', // PHP composer 依赖
-      'storage', // Laravel storage 目录
-    ])
+    let size = 0
 
-    const calculateSize = (dir: string): number => {
-      let size = 0
-      let entries: ReturnType<typeof readdirSync>
+    // 使用系统 du 命令获取目录大小（比递归遍历快得多）
+    try {
+      if (process.platform === 'darwin' || process.platform === 'linux') {
+        // macOS/Linux: 使用 du -sb (-s 总结, -b 字节)
+        // macOS 的 du 不支持 -b，使用 -k 然后转换
+        const duArgs = process.platform === 'darwin' ? ['-sk', projectPath] : ['-sb', projectPath]
+        const output = execSync(`du ${duArgs.join(' ')}`, {
+          cwd: projectPath,
+          encoding: 'utf-8',
+          maxBuffer: 10 * 1024 * 1024, // 10MB buffer
+        })
 
+        // 输出格式: "12345\tpath" 或 "12345 path"
+        const match = output.trim().match(/^(\d+)/)
+        if (match) {
+          const sizeInKB = parseInt(match[1], 10)
+          size = process.platform === 'darwin' ? sizeInKB * 1024 : sizeInKB
+        }
+      } else if (process.platform === 'win32') {
+        // Windows: 使用 PowerShell 的 Get-ChildItem
+        const output = execSync(
+          `powershell -NoProfile -Command "'{0:N0}' - ((Get-ChildItem -Path '${projectPath}' -Recurse -File -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum | Select-Object -First 1)"`,
+          {
+            cwd: projectPath,
+            encoding: 'utf-8',
+            maxBuffer: 10 * 1024 * 1024,
+          }
+        )
+        const sizeStr = output.trim().replace(/,/g, '')
+        size = parseInt(sizeStr, 10)
+      }
+    } catch {
+      // 如果 du 命令失败，回退到快速检查（不递归）
+      // 只统计根目录的文件大小，不包括子目录
       try {
-        entries = readdirSync(dir, { withFileTypes: true })
+        const entries = readdirSync(projectPath, { withFileTypes: true })
+        for (const entry of entries) {
+          if (entry.isFile()) {
+            try {
+              const fullPath = join(projectPath, entry.name as unknown as string)
+              const stats = statSync(fullPath)
+              size += stats.size
+            } catch {
+              // 跳过无法访问的文件
+            }
+          }
+        }
       } catch {
-        // 无法读取目录，跳过
-        return 0
+        // 如果连 readdir 都失败，返回 0
       }
-
-      for (const entry of entries) {
-        const entryName = entry.name as unknown as string
-        const fullPath = join(dir, entryName)
-
-        // 跳过符号链接
-        try {
-          if (entry.isSymbolicLink()) {
-            continue
-          }
-        } catch {
-          continue
-        }
-
-        if (entry.isDirectory()) {
-          // 跳过常见的大目录
-          if (skipDirs.has(entryName)) {
-            continue
-          }
-          size += calculateSize(fullPath)
-        } else {
-          try {
-            const stats = statSync(fullPath)
-            size += stats.size
-          } catch {
-            // 无法获取文件信息，跳过
-            continue
-          }
-        }
-      }
-      return size
     }
 
     const hasNodeModules = existsSync(join(projectPath, 'node_modules'))
@@ -441,7 +426,7 @@ ipcMain.handle('get-project-stats', async (_, projectPath: string) => {
     }
 
     return {
-      size: calculateSize(projectPath),
+      size,
       hasNodeModules,
       packageManager,
     }

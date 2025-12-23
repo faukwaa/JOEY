@@ -251,66 +251,49 @@ ipcMain.handle("remove-scan-folder", async (_, folder) => {
 });
 ipcMain.handle("get-project-stats", async (_, projectPath) => {
   try {
-    const skipDirs = /* @__PURE__ */ new Set([
-      "node_modules",
-      ".git",
-      "dist",
-      "build",
-      "out",
-      "target",
-      "bin",
-      "obj",
-      ".next",
-      ".nuxt",
-      "coverage",
-      "__pycache__",
-      "venv",
-      "env",
-      ".venv",
-      "site-packages",
-      ".vscode",
-      ".idea",
-      "tmp",
-      "temp",
-      "vendor",
-      // PHP composer 依赖
-      "storage"
-      // Laravel storage 目录
-    ]);
-    const calculateSize = (dir) => {
-      let size = 0;
-      let entries;
+    let size = 0;
+    try {
+      if (process.platform === "darwin" || process.platform === "linux") {
+        const duArgs = process.platform === "darwin" ? ["-sk", projectPath] : ["-sb", projectPath];
+        const output = execSync(`du ${duArgs.join(" ")}`, {
+          cwd: projectPath,
+          encoding: "utf-8",
+          maxBuffer: 10 * 1024 * 1024
+          // 10MB buffer
+        });
+        const match = output.trim().match(/^(\d+)/);
+        if (match) {
+          const sizeInKB = parseInt(match[1], 10);
+          size = process.platform === "darwin" ? sizeInKB * 1024 : sizeInKB;
+        }
+      } else if (process.platform === "win32") {
+        const output = execSync(
+          `powershell -NoProfile -Command "'{0:N0}' - ((Get-ChildItem -Path '${projectPath}' -Recurse -File -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum | Select-Object -First 1)"`,
+          {
+            cwd: projectPath,
+            encoding: "utf-8",
+            maxBuffer: 10 * 1024 * 1024
+          }
+        );
+        const sizeStr = output.trim().replace(/,/g, "");
+        size = parseInt(sizeStr, 10);
+      }
+    } catch {
       try {
-        entries = readdirSync(dir, { withFileTypes: true });
+        const entries = readdirSync(projectPath, { withFileTypes: true });
+        for (const entry of entries) {
+          if (entry.isFile()) {
+            try {
+              const fullPath = join(projectPath, entry.name);
+              const stats = statSync(fullPath);
+              size += stats.size;
+            } catch {
+            }
+          }
+        }
       } catch {
-        return 0;
       }
-      for (const entry of entries) {
-        const entryName = entry.name;
-        const fullPath = join(dir, entryName);
-        try {
-          if (entry.isSymbolicLink()) {
-            continue;
-          }
-        } catch {
-          continue;
-        }
-        if (entry.isDirectory()) {
-          if (skipDirs.has(entryName)) {
-            continue;
-          }
-          size += calculateSize(fullPath);
-        } else {
-          try {
-            const stats = statSync(fullPath);
-            size += stats.size;
-          } catch {
-            continue;
-          }
-        }
-      }
-      return size;
-    };
+    }
     const hasNodeModules = existsSync(join(projectPath, "node_modules"));
     let packageManager;
     if (existsSync(join(projectPath, "pnpm-lock.yaml"))) {
@@ -323,7 +306,7 @@ ipcMain.handle("get-project-stats", async (_, projectPath) => {
       packageManager = "npm";
     }
     return {
-      size: calculateSize(projectPath),
+      size,
       hasNodeModules,
       packageManager
     };
