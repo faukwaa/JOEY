@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { FolderIcon, Trash2Icon, PlusIcon } from "lucide-react"
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { cn } from "@/lib/utils"
 import {
   SidebarGroup,
@@ -15,8 +15,7 @@ import { Button } from "@/components/ui/button"
 
 export function NavScan() {
   const [scanFolders, setScanFolders] = useState<string[]>([])
-  const [selectedFolder, setSelectedFolder] = useState<string>("全部") // 默认选中"全部"
-  const isInitializedRef = useRef(false)
+  const [selectedFolder, setSelectedFolder] = useState<string>("")
 
   // 加载已保存的扫描目录
   const loadScanFolders = useCallback(async () => {
@@ -24,11 +23,7 @@ export function NavScan() {
       const result = await window.electronAPI.getScanFolders()
       const folders = result.folders || []
       setScanFolders(folders)
-      // 首次加载时触发一次过滤，显示所有项目
-      if (!isInitializedRef.current) {
-        window.dispatchEvent(new CustomEvent('filter-projects-by-folder', { detail: '' }))
-        isInitializedRef.current = true
-      }
+      // 不再自动触发扫描
     } catch (error) {
       console.error("加载扫描目录失败:", error)
     }
@@ -71,9 +66,10 @@ export function NavScan() {
 
   const handleSelectFolder = (folderPath: string) => {
     setSelectedFolder(folderPath)
-    // 如果选中"全部"，传递空字符串；否则传递目录路径
-    const filterValue = folderPath === '全部' ? '' : folderPath
-    window.dispatchEvent(new CustomEvent('filter-projects-by-folder', { detail: filterValue }))
+    // 通知项目列表过滤显示该目录的项目
+    window.dispatchEvent(new CustomEvent('filter-projects-by-folder', { detail: folderPath }))
+    // 通知项目列表当前选中的目录（用于扫描）
+    window.dispatchEvent(new CustomEvent('selected-scan-folder', { detail: folderPath }))
   }
 
   return (
@@ -95,24 +91,6 @@ export function NavScan() {
         {/* 显示已保存的扫描目录 */}
         {scanFolders.length > 0 && (
           <SidebarMenu>
-            {/* "全部"选项 */}
-            <SidebarMenuItem>
-              <SidebarMenuSub>
-                <SidebarMenuSubItem>
-                  <SidebarMenuSubButton
-                    className={cn(
-                      "group/data-[collapsible=icon]:hidden",
-                      selectedFolder === "全部" && "bg-accent"
-                    )}
-                    onClick={() => handleSelectFolder("全部")}
-                  >
-                    <FolderIcon className="h-4 w-4" />
-                    <span className="flex-1">全部</span>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-              </SidebarMenuSub>
-            </SidebarMenuItem>
-
             {scanFolders.map((folderPath) => {
               const folderName = folderPath.split('/').pop() || folderPath
               const isSelected = selectedFolder === folderPath

@@ -11,7 +11,6 @@ import {
 import {
   SortAscIcon,
   SortDescIcon,
-  PlusIcon,
   LoaderIcon,
   RefreshCwIcon,
 } from 'lucide-react'
@@ -24,6 +23,7 @@ export function ProjectListPage() {
   const [sortBy, setSortBy] = useState<'name' | 'createdAt' | 'updatedAt' | 'size'>('updatedAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [scanProgress, setScanProgress] = useState({ stage: '', current: 0, total: 0, message: '' })
+  const [currentScanFolder, setCurrentScanFolder] = useState<string>('') // 当前选中的扫描目录
 
   // 将缓存数据转换为 Project 类型
   const convertCachedProjects = useCallback((cachedProjects: unknown[]): Project[] => {
@@ -190,12 +190,10 @@ export function ProjectListPage() {
     const handleFilter = (event: Event) => {
       const customEvent = event as CustomEvent<string>
       const folder = customEvent.detail
-      // 过滤项目：如果选中了目录，只显示该目录下的项目；否则显示所有项目
+      // 过滤项目：只显示该目录下的项目
       if (folder) {
         const filtered = allProjects.filter(p => p.scanFolder === folder)
         setProjects(filtered)
-      } else {
-        setProjects(allProjects)
       }
     }
 
@@ -204,6 +202,20 @@ export function ProjectListPage() {
       window.removeEventListener('filter-projects-by-folder', handleFilter)
     }
   }, [allProjects])
+
+  // 监听选中的扫描目录变化
+  useEffect(() => {
+    const handleSelectedFolder = (event: Event) => {
+      const customEvent = event as CustomEvent<string>
+      const folder = customEvent.detail
+      setCurrentScanFolder(folder)
+    }
+
+    window.addEventListener('selected-scan-folder', handleSelectedFolder)
+    return () => {
+      window.removeEventListener('selected-scan-folder', handleSelectedFolder)
+    }
+  }, [])
 
   // 排序项目
   const sortedProjects = [...projects].sort((a, b) => {
@@ -255,30 +267,58 @@ export function ProjectListPage() {
     ))
   }
 
-  const handleAddProject = async () => {
+  const handleScanAll = async () => {
+    if (!currentScanFolder) {
+      console.warn('没有选中的扫描目录')
+      return
+    }
+    // 停止加载状态，开始扫描状态
+    setLoading(false)
+    setScanning(true)
+    setScanProgress({ stage: 'starting', current: 0, total: 0, message: `扫描 ${currentScanFolder}...` })
     try {
-      const result = await window.electronAPI.selectFolders()
-      if (result.folders && result.folders.length > 0) {
-        const newFolder = result.folders[0]
-        // 保存到配置
-        await window.electronAPI.addScanFolder(newFolder)
-        // 重新加载列表
-        await loadProjects(false)
-        // 触发刷新事件
-        window.dispatchEvent(new CustomEvent('refresh-projects'))
+      // 只扫描选中的目录
+      const scanResult = await window.electronAPI.scanProjects([currentScanFolder])
+      if (scanResult.projects && scanResult.projects.length > 0) {
+        // 转换为 Project 类型并获取详细信息
+        const projectsWithDetails = await Promise.all(
+          scanResult.projects.map(async (p: { name: string; path: string }) => {
+            const gitInfo = await window.electronAPI.getGitInfo(p.path)
+            const stats = await window.electronAPI.getProjectStats(p.path)
+
+            return {
+              id: encodeURIComponent(p.path),
+              name: p.name,
+              path: p.path,
+              scanFolder: currentScanFolder,
+              createdAt: stats?.createdAt ? new Date(stats.createdAt) : new Date(),
+              updatedAt: stats?.updatedAt ? new Date(stats.updatedAt) : new Date(),
+              addedAt: new Date(),
+              size: stats?.size || 0,
+              hasNodeModules: stats?.hasNodeModules || false,
+              gitBranch: gitInfo.branch,
+              gitStatus: gitInfo.status as 'clean' | 'modified' | 'error' | 'no-git',
+              gitChanges: gitInfo.changes,
+              packageManager: stats?.packageManager,
+              favorite: false,
+            } as Project
+          })
+        )
+
+        // 更新 allProjects，替换该目录的项目
+        const newAllProjects = allProjects.filter(p => p.scanFolder !== currentScanFolder)
+        newAllProjects.push(...projectsWithDetails)
+        setAllProjects(newAllProjects)
+        setProjects(projectsWithDetails)
+      } else {
+        // 该目录没有项目，清空显示
+        const newAllProjects = allProjects.filter(p => p.scanFolder !== currentScanFolder)
+        setAllProjects(newAllProjects)
+        setProjects([])
       }
     } catch (error) {
-      console.error('Failed to select folders:', error)
-    }
-  }
-
-  const handleScanAll = async () => {
-    setScanning(true)
-    setScanProgress({ stage: 'starting', current: 0, total: 0, message: '开始扫描...' })
-    try {
-      await loadProjects(true) // 强制扫描
-    } catch (error) {
       console.error('Scan failed:', error)
+    } finally {
       setScanning(false)
     }
   }
@@ -344,16 +384,10 @@ export function ProjectListPage() {
             variant="outline"
             size="sm"
             onClick={handleScanAll}
-            disabled={scanning}
+            disabled={scanning || !currentScanFolder}
           >
             <RefreshCwIcon className={`h-4 w-4 mr-2 ${scanning ? 'animate-spin' : ''}`} />
-            扫描
-          </Button>
-
-          {/* 添加项目 */}
-          <Button size="sm" onClick={handleAddProject}>
-            <PlusIcon className="h-4 w-4 mr-2" />
-            添加项目
+            {scanning ? '扫描中...' : '立即扫描'}
           </Button>
         </div>
       </div>
@@ -365,15 +399,21 @@ export function ProjectListPage() {
         </div>
       ) : projects.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full text-center p-12">
-          <PlusIcon className="h-16 w-16 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">还没有项目</h3>
+          <h3 className="text-lg font-semibold mb-2">
+            {currentScanFolder ? `${currentScanFolder.split('/').pop()} 没有找到项目` : '还没有项目'}
+          </h3>
           <p className="text-sm text-muted-foreground max-w-md mb-4">
-            点击左侧的"添加扫描目录"按钮，选择要监控的项目文件夹。
+            {currentScanFolder
+              ? '点击"立即扫描"按钮扫描当前选中的目录'
+              : '在左侧选择一个扫描目录'
+            }
           </p>
-          <Button size="sm" onClick={handleAddProject}>
-            <PlusIcon className="h-4 w-4 mr-2" />
-            添加扫描目录
-          </Button>
+          {currentScanFolder && (
+            <Button size="sm" onClick={handleScanAll} disabled={scanning}>
+              <RefreshCwIcon className={`h-4 w-4 mr-2 ${scanning ? 'animate-spin' : ''}`} />
+              立即扫描
+            </Button>
+          )}
         </div>
       ) : (
         <ProjectGrid
