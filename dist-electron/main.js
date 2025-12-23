@@ -152,9 +152,10 @@ function scanDirectoryRecursively(dir, projects, maxDepth = 5, currentDepth = 0)
           path: fullPath,
           description: "Project"
         });
-      } else {
-        scanDirectoryRecursively(fullPath, projects, maxDepth, currentDepth + 1);
+        console.log(`找到项目: ${fullPath}`);
+        continue;
       }
+      scanDirectoryRecursively(fullPath, projects, maxDepth, currentDepth + 1);
     }
   } catch (error) {
     console.error(`Error scanning directory ${dir}:`, error);
@@ -163,7 +164,11 @@ function scanDirectoryRecursively(dir, projects, maxDepth = 5, currentDepth = 0)
 ipcMain.handle("scan-projects", async (_, folders) => {
   const projects = [];
   for (const folder of folders) {
-    if (!existsSync(folder)) continue;
+    console.log(`开始扫描目录: ${folder}`);
+    if (!existsSync(folder)) {
+      console.log(`目录不存在: ${folder}`);
+      continue;
+    }
     if (isProjectDirectory(folder)) {
       const folderName = folder.split("/").pop() || folder;
       projects.push({
@@ -171,16 +176,19 @@ ipcMain.handle("scan-projects", async (_, folders) => {
         path: folder,
         description: "Project"
       });
+      console.log(`找到项目 (根目录): ${folder}`);
     }
     try {
       scanDirectoryRecursively(folder, projects, 5, 0);
     } catch (error) {
       console.error(`Error scanning folder ${folder}:`, error);
     }
+    console.log(`目录扫描完成: ${folder}, 找到 ${projects.length} 个项目`);
   }
   const uniqueProjects = projects.filter(
     (project, index, self) => index === self.findIndex((p) => p.path === project.path)
   );
+  console.log(`总共找到 ${uniqueProjects.length} 个唯一项目`);
   return { projects: uniqueProjects };
 });
 ipcMain.handle("get-git-info", async (_, projectPath) => {
