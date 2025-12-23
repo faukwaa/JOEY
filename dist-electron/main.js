@@ -1,8 +1,10 @@
 import { app, BrowserWindow, ipcMain, shell, dialog } from "electron";
 import path, { dirname, join } from "path";
-import { existsSync, readdirSync, statSync, writeFileSync, readFileSync, mkdirSync } from "fs";
+import { existsSync, readdir, stat, writeFileSync, readFileSync, mkdirSync } from "fs";
 import { fileURLToPath } from "url";
-import { execSync } from "child_process";
+import { exec } from "child_process";
+import { promisify } from "util";
+const execAsync = promisify(exec);
 const __filename$1 = fileURLToPath(import.meta.url);
 const __dirname$1 = dirname(__filename$1);
 process.env.DIST = path.join(__dirname$1, "../dist");
@@ -167,7 +169,7 @@ function shouldSkipDirectory(dirName) {
   ];
   return skipDirs.includes(dirName) || dirName.startsWith(".");
 }
-function scanDirectoryRecursively(dir, projects, maxDepth = 5, currentDepth = 0) {
+async function scanDirectoryRecursively(dir, projects, maxDepth = 5, currentDepth = 0, onProgress) {
   if (currentDepth >= maxDepth) {
     return;
   }
@@ -175,12 +177,14 @@ function scanDirectoryRecursively(dir, projects, maxDepth = 5, currentDepth = 0)
     return;
   }
   try {
-    const entries = readdirSync(dir, { withFileTypes: true });
+    const readdirAsync = promisify(readdir);
+    const entries = await readdirAsync(dir, { withFileTypes: true });
     for (const entry of entries) {
       if (!entry.isDirectory() || shouldSkipDirectory(entry.name)) {
         continue;
       }
       const fullPath = join(dir, entry.name);
+      onProgress?.(fullPath);
       if (isProjectDirectory(fullPath)) {
         projects.push({
           name: entry.name,
@@ -190,16 +194,22 @@ function scanDirectoryRecursively(dir, projects, maxDepth = 5, currentDepth = 0)
         console.log(`找到项目: ${fullPath}`);
         continue;
       }
-      scanDirectoryRecursively(fullPath, projects, maxDepth, currentDepth + 1);
+      await scanDirectoryRecursively(fullPath, projects, maxDepth, currentDepth + 1, onProgress);
     }
   } catch (error) {
     console.error(`Error scanning directory ${dir}:`, error);
   }
 }
-ipcMain.handle("scan-projects", async (_, folders) => {
+ipcMain.handle("scan-projects", async (_event, folders) => {
   const projects = [];
+  const sendProgress = (stage, current, total, message) => {
+    if (win && !win.isDestroyed()) {
+      win.webContents.send("scan-progress", { stage, current, total, message });
+    }
+  };
   for (const folder of folders) {
     console.log(`开始扫描目录: ${folder}`);
+    sendProgress("scanning", 0, 0, `扫描目录: ${folder}`);
     if (!existsSync(folder)) {
       console.log(`目录不存在: ${folder}`);
       continue;
@@ -212,9 +222,12 @@ ipcMain.handle("scan-projects", async (_, folders) => {
         description: "Project"
       });
       console.log(`找到项目 (根目录): ${folder}`);
+      sendProgress("found", projects.length, 0, `找到项目: ${folderName}`);
     }
     try {
-      scanDirectoryRecursively(folder, projects, 5, 0);
+      await scanDirectoryRecursively(folder, projects, 5, 0, (currentPath) => {
+        sendProgress("scanning", 0, 0, `扫描中: ${currentPath}`);
+      });
     } catch (error) {
       console.error(`Error scanning folder ${folder}:`, error);
     }
@@ -225,6 +238,7 @@ ipcMain.handle("scan-projects", async (_, folders) => {
   );
   console.log(`总共找到 ${uniqueProjects.length} 个唯一项目`);
   saveProjectsCache(uniqueProjects, folders);
+  sendProgress("complete", uniqueProjects.length, uniqueProjects.length, "扫描完成");
   return { projects: uniqueProjects };
 });
 ipcMain.handle("get-projects-cache", async () => {
@@ -237,17 +251,15 @@ ipcMain.handle("get-git-info", async (_, projectPath) => {
     if (!existsSync(gitDir)) {
       return { branch: null, status: "no-git", changes: 0 };
     }
-    const branch = execSync("git rev-parse --abbrev-ref HEAD", {
-      cwd: projectPath,
-      encoding: "utf-8"
-    }).trim();
-    const status = execSync("git status --porcelain", {
-      cwd: projectPath,
-      encoding: "utf-8"
+    const { stdout: branch } = await execAsync("git rev-parse --abbrev-ref HEAD", {
+      cwd: projectPath
+    });
+    const { stdout: status } = await execAsync("git status --porcelain", {
+      cwd: projectPath
     });
     const isClean = status.trim().length === 0;
     return {
-      branch,
+      branch: branch.trim(),
       status: isClean ? "clean" : "modified",
       changes: status.trim().split("\n").filter(Boolean).length
     };
@@ -295,9 +307,8 @@ ipcMain.handle("get-project-stats", async (_, projectPath) => {
     try {
       if (process.platform === "darwin" || process.platform === "linux") {
         const duArgs = process.platform === "darwin" ? ["-sk", projectPath] : ["-sb", projectPath];
-        const output = execSync(`du ${duArgs.join(" ")}`, {
+        const { stdout: output } = await execAsync(`du ${duArgs.join(" ")}`, {
           cwd: projectPath,
-          encoding: "utf-8",
           maxBuffer: 10 * 1024 * 1024
           // 10MB buffer
         });
@@ -307,11 +318,10 @@ ipcMain.handle("get-project-stats", async (_, projectPath) => {
           size = process.platform === "darwin" ? sizeInKB * 1024 : sizeInKB;
         }
       } else if (process.platform === "win32") {
-        const output = execSync(
+        const { stdout: output } = await execAsync(
           `powershell -NoProfile -Command "'{0:N0}' - ((Get-ChildItem -Path '${projectPath}' -Recurse -File -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum | Select-Object -First 1)"`,
           {
             cwd: projectPath,
-            encoding: "utf-8",
             maxBuffer: 10 * 1024 * 1024
           }
         );
@@ -320,12 +330,14 @@ ipcMain.handle("get-project-stats", async (_, projectPath) => {
       }
     } catch {
       try {
-        const entries = readdirSync(projectPath, { withFileTypes: true });
+        const readdirAsync = promisify(readdir);
+        const statAsync = promisify(stat);
+        const entries = await readdirAsync(projectPath, { withFileTypes: true });
         for (const entry of entries) {
           if (entry.isFile()) {
             try {
               const fullPath = join(projectPath, entry.name);
-              const stats = statSync(fullPath);
+              const stats = await statAsync(fullPath);
               size += stats.size;
             } catch {
             }

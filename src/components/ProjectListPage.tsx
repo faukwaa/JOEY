@@ -22,6 +22,7 @@ export function ProjectListPage() {
   const [scanning, setScanning] = useState(false)
   const [sortBy, setSortBy] = useState<'name' | 'createdAt' | 'updatedAt' | 'size'>('updatedAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  const [scanProgress, setScanProgress] = useState({ stage: '', current: 0, total: 0, message: '' })
 
   // 将缓存数据转换为 Project 类型
   const convertCachedProjects = useCallback((cachedProjects: unknown[]): Project[] => {
@@ -146,6 +147,17 @@ export function ProjectListPage() {
     loadProjects(false)
   }, [loadProjects])
 
+  // 监听扫描进度
+  useEffect(() => {
+    const cleanup = window.electronAPI.onScanProgress((progress) => {
+      setScanProgress(progress)
+      if (progress.stage === 'complete') {
+        setScanning(false)
+      }
+    })
+    return cleanup
+  }, [])
+
   // 监听自定义事件来刷新项目列表
   useEffect(() => {
     const handleRefresh = () => {
@@ -227,9 +239,11 @@ export function ProjectListPage() {
 
   const handleScanAll = async () => {
     setScanning(true)
+    setScanProgress({ stage: 'starting', current: 0, total: 0, message: '开始扫描...' })
     try {
       await loadProjects(true) // 强制扫描
-    } finally {
+    } catch (error) {
+      console.error('Scan failed:', error)
       setScanning(false)
     }
   }
@@ -241,9 +255,14 @@ export function ProjectListPage() {
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold">我的项目</h1>
           {scanning && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <LoaderIcon className="h-4 w-4 animate-spin" />
-              扫描中...
+            <div className="flex items-center gap-2 text-sm">
+              <LoaderIcon className="h-4 w-4 animate-spin text-muted-foreground" />
+              <span className="text-muted-foreground">{scanProgress.message || '扫描中...'}</span>
+              {scanProgress.current > 0 && (
+                <span className="text-muted-foreground">
+                  ({scanProgress.current}/{scanProgress.total})
+                </span>
+              )}
             </div>
           )}
         </div>

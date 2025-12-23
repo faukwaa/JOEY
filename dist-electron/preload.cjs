@@ -21,5 +21,15 @@ electron.contextBridge.exposeInMainWorld("electronAPI", {
   getScanFolders: () => electron.ipcRenderer.invoke("get-scan-folders"),
   addScanFolder: (folder) => electron.ipcRenderer.invoke("add-scan-folder", folder),
   removeScanFolder: (folder) => electron.ipcRenderer.invoke("remove-scan-folder", folder),
-  getProjectStats: (projectPath) => electron.ipcRenderer.invoke("get-project-stats", projectPath)
+  getProjectStats: (projectPath) => electron.ipcRenderer.invoke("get-project-stats", projectPath),
+  // 扫描进度监听
+  onScanProgress: (callback) => {
+    const handler = (_, progress) => {
+      callback(progress);
+    };
+    electron.ipcRenderer.on("scan-progress", handler);
+    return () => {
+      electron.ipcRenderer.removeListener("scan-progress", handler);
+    };
+  }
 });

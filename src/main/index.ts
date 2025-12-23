@@ -1,10 +1,13 @@
 import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron'
 import path from 'path'
-import { existsSync, readdirSync, readFileSync, writeFileSync, mkdirSync, statSync } from 'fs'
+import { existsSync, readFileSync, writeFileSync, mkdirSync, readdir, stat } from 'fs'
 import { join } from 'path'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
-import { execSync } from 'child_process'
+import { exec } from 'child_process'
+import { promisify } from 'util'
+
+const execAsync = promisify(exec)
 
 // Polyfill for __dirname and __filename in ES modules
 const __filename = fileURLToPath(import.meta.url)
@@ -226,13 +229,14 @@ function shouldSkipDirectory(dirName: string): boolean {
   return skipDirs.includes(dirName) || dirName.startsWith('.')
 }
 
-// 递归扫描目录查找项目
-function scanDirectoryRecursively(
+// 递归扫描目录查找项目（异步版本）
+async function scanDirectoryRecursively(
   dir: string,
   projects: Project[],
   maxDepth: number = 5,
-  currentDepth: number = 0
-): void {
+  currentDepth: number = 0,
+  onProgress?: (currentPath: string) => void
+): Promise<void> {
   // 达到最大深度，停止扫描
   if (currentDepth >= maxDepth) {
     return
@@ -244,7 +248,8 @@ function scanDirectoryRecursively(
   }
 
   try {
-    const entries = readdirSync(dir, { withFileTypes: true })
+    const readdirAsync = promisify(readdir)
+    const entries = await readdirAsync(dir, { withFileTypes: true })
 
     for (const entry of entries) {
       // 跳过文件和隐藏目录
@@ -253,6 +258,9 @@ function scanDirectoryRecursively(
       }
 
       const fullPath = join(dir, entry.name)
+
+      // 发送进度更新
+      onProgress?.(fullPath)
 
       // 检查是否是项目目录
       if (isProjectDirectory(fullPath)) {
@@ -267,18 +275,24 @@ function scanDirectoryRecursively(
       }
 
       // 如果不是项目目录，继续扫描子目录
-      scanDirectoryRecursively(fullPath, projects, maxDepth, currentDepth + 1)
+      await scanDirectoryRecursively(fullPath, projects, maxDepth, currentDepth + 1, onProgress)
     }
   } catch (error) {
     console.error(`Error scanning directory ${dir}:`, error)
   }
 }
 
-ipcMain.handle('scan-projects', async (_, folders: string[]) => {
+ipcMain.handle('scan-projects', async (_event, folders: string[]) => {
   const projects: Project[] = []
+  const sendProgress = (stage: string, current: number, total: number, message: string) => {
+    if (win && !win.isDestroyed()) {
+      win.webContents.send('scan-progress', { stage, current, total, message })
+    }
+  }
 
   for (const folder of folders) {
     console.log(`开始扫描目录: ${folder}`)
+    sendProgress('scanning', 0, 0, `扫描目录: ${folder}`)
 
     if (!existsSync(folder)) {
       console.log(`目录不存在: ${folder}`)
@@ -294,11 +308,14 @@ ipcMain.handle('scan-projects', async (_, folders: string[]) => {
         description: 'Project'
       })
       console.log(`找到项目 (根目录): ${folder}`)
+      sendProgress('found', projects.length, 0, `找到项目: ${folderName}`)
     }
 
     // 递归扫描子目录
     try {
-      scanDirectoryRecursively(folder, projects, 5, 0)
+      await scanDirectoryRecursively(folder, projects, 5, 0, (currentPath) => {
+        sendProgress('scanning', 0, 0, `扫描中: ${currentPath}`)
+      })
     } catch (error) {
       console.error(`Error scanning folder ${folder}:`, error)
     }
@@ -315,6 +332,8 @@ ipcMain.handle('scan-projects', async (_, folders: string[]) => {
 
   // 保存到缓存
   saveProjectsCache(uniqueProjects, folders)
+
+  sendProgress('complete', uniqueProjects.length, uniqueProjects.length, '扫描完成')
 
   return { projects: uniqueProjects }
 })
@@ -334,21 +353,19 @@ ipcMain.handle('get-git-info', async (_, projectPath: string) => {
     }
 
     // Get current branch
-    const branch = execSync('git rev-parse --abbrev-ref HEAD', {
+    const { stdout: branch } = await execAsync('git rev-parse --abbrev-ref HEAD', {
       cwd: projectPath,
-      encoding: 'utf-8'
-    }).trim()
+    })
 
     // Get git status
-    const status = execSync('git status --porcelain', {
+    const { stdout: status } = await execAsync('git status --porcelain', {
       cwd: projectPath,
-      encoding: 'utf-8'
     })
 
     const isClean = status.trim().length === 0
 
     return {
-      branch,
+      branch: branch.trim(),
       status: isClean ? 'clean' : 'modified',
       changes: status.trim().split('\n').filter(Boolean).length
     }
@@ -415,9 +432,8 @@ ipcMain.handle('get-project-stats', async (_, projectPath: string) => {
         // macOS/Linux: 使用 du -sb (-s 总结, -b 字节)
         // macOS 的 du 不支持 -b，使用 -k 然后转换
         const duArgs = process.platform === 'darwin' ? ['-sk', projectPath] : ['-sb', projectPath]
-        const output = execSync(`du ${duArgs.join(' ')}`, {
+        const { stdout: output } = await execAsync(`du ${duArgs.join(' ')}`, {
           cwd: projectPath,
-          encoding: 'utf-8',
           maxBuffer: 10 * 1024 * 1024, // 10MB buffer
         })
 
@@ -429,11 +445,10 @@ ipcMain.handle('get-project-stats', async (_, projectPath: string) => {
         }
       } else if (process.platform === 'win32') {
         // Windows: 使用 PowerShell 的 Get-ChildItem
-        const output = execSync(
+        const { stdout: output } = await execAsync(
           `powershell -NoProfile -Command "'{0:N0}' - ((Get-ChildItem -Path '${projectPath}' -Recurse -File -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum | Select-Object -First 1)"`,
           {
             cwd: projectPath,
-            encoding: 'utf-8',
             maxBuffer: 10 * 1024 * 1024,
           }
         )
@@ -444,12 +459,16 @@ ipcMain.handle('get-project-stats', async (_, projectPath: string) => {
       // 如果 du 命令失败，回退到快速检查（不递归）
       // 只统计根目录的文件大小，不包括子目录
       try {
-        const entries = readdirSync(projectPath, { withFileTypes: true })
+        // 使用 promisify 包装 readdir 和 stat
+        const readdirAsync = promisify(readdir)
+        const statAsync = promisify(stat)
+        const entries = await readdirAsync(projectPath, { withFileTypes: true })
+
         for (const entry of entries) {
           if (entry.isFile()) {
             try {
               const fullPath = join(projectPath, entry.name as unknown as string)
-              const stats = statSync(fullPath)
+              const stats = await statAsync(fullPath)
               size += stats.size
             } catch {
               // 跳过无法访问的文件

@@ -24,6 +24,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   addScanFolder: (folder: string) => ipcRenderer.invoke('add-scan-folder', folder),
   removeScanFolder: (folder: string) => ipcRenderer.invoke('remove-scan-folder', folder),
   getProjectStats: (projectPath: string) => ipcRenderer.invoke('get-project-stats', projectPath),
+  // 扫描进度监听
+  onScanProgress: (callback) => {
+    const handler = (_: unknown, progress: { stage: string; current: number; total: number; message: string }) => {
+      callback(progress)
+    }
+    ipcRenderer.on('scan-progress', handler)
+    return () => {
+      ipcRenderer.removeListener('scan-progress', handler)
+    }
+  },
 })
 
 declare global {
@@ -46,6 +56,8 @@ declare global {
         hasNodeModules: boolean
         packageManager?: 'npm' | 'yarn' | 'pnpm' | 'bun'
       }>
+      // 扫描进度事件
+      onScanProgress: (callback: (progress: { stage: string; current: number; total: number; message: string }) => void) => () => void
     }
   }
 }
