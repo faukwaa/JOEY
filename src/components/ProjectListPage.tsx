@@ -20,6 +20,7 @@ export function ProjectListPage() {
   const [allProjects, setAllProjects] = useState<Project[]>([]) // 保存所有项目
   const [loading, setLoading] = useState(true)
   const [scanning, setScanning] = useState(false)
+  const [scanCancelled, setScanCancelled] = useState(false)
   const [sortBy, setSortBy] = useState<'name' | 'createdAt' | 'updatedAt' | 'size'>('updatedAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [scanProgress, setScanProgress] = useState({ stage: '', current: 0, total: 0, message: '' })
@@ -217,42 +218,61 @@ export function ProjectListPage() {
       console.warn('没有选中的扫描目录')
       return
     }
-    // 停止加载状态，开始扫描状态
+    // 如果正在扫描，则停止扫描
+    if (scanning) {
+      setScanCancelled(true)
+      return
+    }
+
+    // 开始扫描
+    setScanCancelled(false)
     setLoading(false)
     setScanning(true)
     setScanProgress({ stage: 'starting', current: 0, total: 0, message: `准备扫描 ${currentScanFolder.split('/').pop()}...` })
-
-    // 等待 UI 更新，确保进度状态能被显示
-    await new Promise(resolve => setTimeout(resolve, 50))
 
     try {
       // 只扫描选中的目录
       const scanResult = await window.electronAPI.scanProjects([currentScanFolder])
       if (scanResult.projects && scanResult.projects.length > 0) {
         // 转换为 Project 类型并获取详细信息
-        const projectsWithDetails = await Promise.all(
-          scanResult.projects.map(async (p: { name: string; path: string }) => {
-            const gitInfo = await window.electronAPI.getGitInfo(p.path)
-            const stats = await window.electronAPI.getProjectStats(p.path)
+        const projectsWithDetails: Project[] = []
 
-            return {
-              id: encodeURIComponent(p.path),
-              name: p.name,
-              path: p.path,
-              scanFolder: currentScanFolder,
-              createdAt: stats?.createdAt ? new Date(stats.createdAt) : new Date(),
-              updatedAt: stats?.updatedAt ? new Date(stats.updatedAt) : new Date(),
-              addedAt: new Date(),
-              size: stats?.size || 0,
-              hasNodeModules: stats?.hasNodeModules || false,
-              gitBranch: gitInfo.branch,
-              gitStatus: gitInfo.status as 'clean' | 'modified' | 'error' | 'no-git',
-              gitChanges: gitInfo.changes,
-              packageManager: stats?.packageManager,
-              favorite: false,
-            } as Project
+        for (const p of scanResult.projects) {
+          // 检查是否已取消
+          if (scanCancelled) {
+            setScanProgress({ stage: 'cancelled', current: projectsWithDetails.length, total: scanResult.projects.length, message: '扫描已取消' })
+            break
+          }
+
+          const gitInfo = await window.electronAPI.getGitInfo(p.path)
+          const stats = await window.electronAPI.getProjectStats(p.path)
+
+          const project = {
+            id: encodeURIComponent(p.path),
+            name: p.name,
+            path: p.path,
+            scanFolder: currentScanFolder,
+            createdAt: stats?.createdAt ? new Date(stats.createdAt) : new Date(),
+            updatedAt: stats?.updatedAt ? new Date(stats.updatedAt) : new Date(),
+            addedAt: new Date(),
+            size: stats?.size || 0,
+            hasNodeModules: stats?.hasNodeModules || false,
+            gitBranch: gitInfo.branch,
+            gitStatus: gitInfo.status as 'clean' | 'modified' | 'error' | 'no-git',
+            gitChanges: gitInfo.changes,
+            packageManager: stats?.packageManager,
+            favorite: false,
+          } as Project
+
+          projectsWithDetails.push(project)
+          // 更新进度
+          setScanProgress({
+            stage: 'processing',
+            current: projectsWithDetails.length,
+            total: scanResult.projects.length,
+            message: `正在处理: ${p.name}`
           })
-        )
+        }
 
         // 更新 allProjects，替换该目录的项目
         const newAllProjects = allProjects.filter(p => p.scanFolder !== currentScanFolder)
@@ -269,96 +289,104 @@ export function ProjectListPage() {
       console.error('Scan failed:', error)
     } finally {
       setScanning(false)
+      setScanCancelled(false)
     }
   }
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4">
       {/* 控制栏 */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">我的项目</h1>
-          {scanning && (
-            <div className="flex items-center gap-2 text-sm">
-              <LoaderIcon className="h-4 w-4 animate-spin text-muted-foreground" />
-              <span className="text-muted-foreground">{scanProgress.message || '扫描中...'}</span>
-              {scanProgress.current > 0 && (
-                <span className="text-muted-foreground">
-                  ({scanProgress.current}/{scanProgress.total})
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {/* 排序 */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-              >
-                {sortOrder === 'asc' ? (
-                  <SortAscIcon className="h-4 w-4 mr-2" />
-                ) : (
-                  <SortDescIcon className="h-4 w-4 mr-2" />
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold">我的项目</h1>
+            {scanning && (
+              <div className="flex items-center gap-2 text-sm">
+                <LoaderIcon className="h-4 w-4 animate-spin text-muted-foreground" />
+                <span className="text-muted-foreground">{scanProgress.message || '扫描中...'}</span>
+                {scanProgress.total > 0 && (
+                  <span className="text-muted-foreground">
+                    ({scanProgress.current}/{scanProgress.total})
+                  </span>
                 )}
-                {sortBy === 'name' && '按名称'}
-                {sortBy === 'size' && '按大小'}
-                {sortBy === 'createdAt' && '按创建时间'}
-                {sortBy === 'updatedAt' && '按更新时间'}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setSortBy('name')}>
-                按名称
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSortBy('size')}>
-                按大小
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSortBy('createdAt')}>
-                按创建时间
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSortBy('updatedAt')}>
-                按更新时间
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}>
-                {sortOrder === 'asc' ? '降序' : '升序'}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {/* 排序 */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                >
+                  {sortOrder === 'asc' ? (
+                    <SortAscIcon className="h-4 w-4 mr-2" />
+                  ) : (
+                    <SortDescIcon className="h-4 w-4 mr-2" />
+                  )}
+                  {sortBy === 'name' && '按名称'}
+                  {sortBy === 'size' && '按大小'}
+                  {sortBy === 'createdAt' && '按创建时间'}
+                  {sortBy === 'updatedAt' && '按更新时间'}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setSortBy('name')}>
+                  按名称
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortBy('size')}>
+                  按大小
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortBy('createdAt')}>
+                  按创建时间
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortBy('updatedAt')}>
+                  按更新时间
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}>
+                  {sortOrder === 'asc' ? '降序' : '升序'}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-          {/* 扫描 */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleScanAll}
-            disabled={scanning || !currentScanFolder}
-          >
-            <RefreshCwIcon className={`h-4 w-4 mr-2 ${scanning ? 'animate-spin' : ''}`} />
-            {scanning ? '扫描中...' : '立即扫描'}
-          </Button>
+            {/* 扫描/停止 */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleScanAll}
+              disabled={!currentScanFolder}
+            >
+              {scanning ? (
+                <>
+                  <RefreshCwIcon className="h-4 w-4 mr-2" />
+                  停止扫描
+                </>
+              ) : (
+                <>
+                  <RefreshCwIcon className="h-4 w-4 mr-2" />
+                  立即扫描
+                </>
+              )}
+            </Button>
+          </div>
         </div>
+
+        {/* 进度条 */}
+        {scanning && scanProgress.total > 0 && (
+          <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
+            <div
+              className="bg-primary h-full transition-all duration-300 ease-out"
+              style={{ width: `${(scanProgress.current / scanProgress.total) * 100}%` }}
+            />
+          </div>
+        )}
       </div>
 
       {/* 项目列表 */}
       {loading ? (
         <div className="flex items-center justify-center flex-1">
           <div className="text-muted-foreground">加载中...</div>
-        </div>
-      ) : scanning ? (
-        // 扫描中，显示进度
-        <div className="flex flex-col items-center justify-center h-full text-center p-12">
-          <LoaderIcon className="h-12 w-12 animate-spin text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">正在扫描项目</h3>
-          <p className="text-sm text-muted-foreground max-w-md">
-            {scanProgress.message || '扫描中...'}
-          </p>
-          {scanProgress.current > 0 && (
-            <p className="text-sm text-muted-foreground mt-2">
-              已扫描: {scanProgress.current}/{scanProgress.total}
-            </p>
-          )}
         </div>
       ) : projects.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full text-center p-12">
@@ -371,12 +399,6 @@ export function ProjectListPage() {
               : '在左侧选择一个扫描目录'
             }
           </p>
-          {currentScanFolder && (
-            <Button size="sm" onClick={handleScanAll} disabled={scanning}>
-              <RefreshCwIcon className={`h-4 w-4 mr-2 ${scanning ? 'animate-spin' : ''}`} />
-              立即扫描
-            </Button>
-          )}
         </div>
       ) : (
         <ProjectGrid
