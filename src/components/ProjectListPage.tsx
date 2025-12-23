@@ -397,17 +397,23 @@ export function ProjectListPage() {
 
         {/* 进度条 */}
         {scanning && (
-          <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
-            {scanProgress.total > 0 ? (
-              // 确定进度条：显示实际进度
-              <div
-                className="bg-primary h-full transition-all duration-300 ease-out"
-                style={{ width: `${(scanProgress.current / scanProgress.total) * 100}%` }}
-              />
-            ) : (
-              // 不确定进度条：动画效果
-              <div className="bg-primary h-full animate-pulse" style={{ width: '30%' }} />
-            )}
+          <div className="flex flex-col gap-2">
+            <div className="text-sm text-muted-foreground">
+              {scanProgress.message || '扫描中...'}
+              {scanProgress.total > 0 && (
+                <span> ({scanProgress.current}/{scanProgress.total})</span>
+              )}
+            </div>
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden border border-gray-300 dark:border-gray-600">
+              {scanProgress.total > 0 ? (
+                <div
+                  className="bg-blue-500 h-full transition-all duration-300 ease-out"
+                  style={{ width: `${Math.round((scanProgress.current / scanProgress.total) * 100)}%` }}
+                />
+              ) : (
+                <div className="bg-blue-500 h-full animate-pulse" style={{ width: '30%' }} />
+              )}
+            </div>
           </div>
         )}
       </div>
