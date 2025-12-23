@@ -225,10 +225,12 @@ export function ProjectListPage() {
     }
     // 如果正在扫描，则停止扫描
     if (scanning) {
+      console.log('点击停止扫描')
       setScanCancelled(true)
       return
     }
 
+    console.log('开始扫描:', currentScanFolder)
     // 开始扫描
     setScanCancelled(false)
     setLoading(false)
@@ -236,20 +238,31 @@ export function ProjectListPage() {
     setScanProgress({ stage: 'starting', current: 0, total: 0, message: `准备扫描 ${currentScanFolder.split('/').pop()}...` })
 
     try {
+      console.log('调用 window.electronAPI.scanProjects')
       // 只扫描选中的目录
       const scanResult = await window.electronAPI.scanProjects([currentScanFolder])
+      console.log('scanProjects 返回结果:', scanResult)
+
       if (scanResult.projects && scanResult.projects.length > 0) {
+        console.log(`找到 ${scanResult.projects.length} 个项目，开始获取详细信息`)
+
         // 转换为 Project 类型并获取详细信息
         const projectsWithDetails: Project[] = []
 
-        for (const p of scanResult.projects) {
+        for (let i = 0; i < scanResult.projects.length; i++) {
+          const p = scanResult.projects[i]
+          console.log(`处理第 ${i + 1}/${scanResult.projects.length} 个项目: ${p.name}`)
+
           // 检查是否已取消
           if (scanCancelled) {
+            console.log('扫描已取消')
             setScanProgress({ stage: 'cancelled', current: projectsWithDetails.length, total: scanResult.projects.length, message: '扫描已取消' })
             break
           }
 
+          console.log('  获取 git info...')
           const gitInfo = await window.electronAPI.getGitInfo(p.path)
+          console.log('  获取 stats...')
           const stats = await window.electronAPI.getProjectStats(p.path)
 
           const project = {
@@ -270,6 +283,8 @@ export function ProjectListPage() {
           } as Project
 
           projectsWithDetails.push(project)
+          console.log(`  项目 ${p.name} 处理完成`)
+
           // 更新进度
           setScanProgress({
             stage: 'processing',
