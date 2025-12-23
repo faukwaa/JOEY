@@ -62,6 +62,7 @@ export function ProjectListPage() {
   // 扫描项目（强制重新扫描）
   const scanProjects = useCallback(async (folders: string[]): Promise<Project[]> => {
     const allProjects: Project[] = []
+    const seenPaths = new Set<string>()
 
     for (const folder of folders) {
       const scanResult = await window.electronAPI.scanProjects([folder])
@@ -92,7 +93,14 @@ export function ProjectListPage() {
             } as Project
           })
         )
-        allProjects.push(...projectsWithDetails)
+
+        // 去重：只添加尚未见过的路径
+        for (const project of projectsWithDetails) {
+          if (!seenPaths.has(project.path)) {
+            seenPaths.add(project.path)
+            allProjects.push(project)
+          }
+        }
       }
     }
 
