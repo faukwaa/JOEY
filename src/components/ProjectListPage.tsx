@@ -26,6 +26,11 @@ export function ProjectListPage() {
   const [scanProgress, setScanProgress] = useState({ stage: '', current: 0, total: 0, message: '' })
   const [currentScanFolder, setCurrentScanFolder] = useState<string>('') // 当前选中的扫描目录
 
+  // 调试：监听 projects 变化
+  useEffect(() => {
+    console.log(`projects 状态变化: ${projects.length} 个项目, loading: ${loading}, scanning: ${scanning}`)
+  }, [projects, loading, scanning])
+
   // 将缓存数据转换为 Project 类型
   const convertCachedProjects = useCallback((cachedProjects: unknown[]): Project[] => {
     return cachedProjects.map((p: unknown) => {
@@ -279,6 +284,7 @@ export function ProjectListPage() {
         newAllProjects.push(...projectsWithDetails)
         setAllProjects(newAllProjects)
         setProjects(projectsWithDetails)
+        console.log(`扫描完成，找到 ${projectsWithDetails.length} 个项目`)
       } else {
         // 该目录没有项目，清空显示
         const newAllProjects = allProjects.filter(p => p.scanFolder !== currentScanFolder)
@@ -288,6 +294,7 @@ export function ProjectListPage() {
     } catch (error) {
       console.error('Scan failed:', error)
     } finally {
+      console.log('扫描 finally，设置 scanning = false')
       setScanning(false)
       setScanCancelled(false)
     }
