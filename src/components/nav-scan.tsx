@@ -17,13 +17,20 @@ export function NavScan() {
   const [scanFolders, setScanFolders] = useState<string[]>([])
   const [selectedFolder, setSelectedFolder] = useState<string>("")
 
+  const handleSelectFolder = useCallback((folderPath: string) => {
+    setSelectedFolder(folderPath)
+    // 通知项目列表过滤显示该目录的项目
+    window.dispatchEvent(new CustomEvent('filter-projects-by-folder', { detail: folderPath }))
+    // 通知项目列表当前选中的目录（用于扫描）
+    window.dispatchEvent(new CustomEvent('selected-scan-folder', { detail: folderPath }))
+  }, [])
+
   // 加载已保存的扫描目录
   const loadScanFolders = useCallback(async () => {
     try {
       const result = await window.electronAPI.getScanFolders()
       const folders = result.folders || []
       setScanFolders(folders)
-      // 不再自动触发扫描
     } catch (error) {
       console.error("加载扫描目录失败:", error)
     }
@@ -34,6 +41,13 @@ export function NavScan() {
     loadScanFolders()
   }, [loadScanFolders])
 
+  // 如果扫描目录列表变化且当前没有选中，选中第一个
+  useEffect(() => {
+    if (!selectedFolder && scanFolders.length > 0) {
+      handleSelectFolder(scanFolders[0])
+    }
+  }, [scanFolders, selectedFolder, handleSelectFolder])
+
   const handleAddFolder = async () => {
     try {
       const result = await window.electronAPI.selectFolders()
@@ -43,8 +57,8 @@ export function NavScan() {
         await window.electronAPI.addScanFolder(newFolder)
         // 重新加载列表
         await loadScanFolders()
-        // 触发刷新事件
-        window.dispatchEvent(new CustomEvent('refresh-projects'))
+        // 选中新添加的目录
+        handleSelectFolder(newFolder)
       }
     } catch (error) {
       console.error("添加扫描目录失败:", error)
@@ -62,14 +76,6 @@ export function NavScan() {
     } catch (error) {
       console.error("删除扫描目录失败:", error)
     }
-  }
-
-  const handleSelectFolder = (folderPath: string) => {
-    setSelectedFolder(folderPath)
-    // 通知项目列表过滤显示该目录的项目
-    window.dispatchEvent(new CustomEvent('filter-projects-by-folder', { detail: folderPath }))
-    // 通知项目列表当前选中的目录（用于扫描）
-    window.dispatchEvent(new CustomEvent('selected-scan-folder', { detail: folderPath }))
   }
 
   return (
