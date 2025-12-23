@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain, shell, dialog } from "electron";
 import path, { dirname, join } from "path";
-import { existsSync, readdir, stat, writeFileSync, readFileSync, mkdirSync } from "fs";
+import { existsSync, stat, readdir, writeFileSync, readFileSync, mkdirSync } from "fs";
 import { fileURLToPath } from "url";
 import { exec } from "child_process";
 import { promisify } from "util";
@@ -307,24 +307,28 @@ ipcMain.handle("get-project-stats", async (_, projectPath) => {
     let createdAt = Date.now();
     let updatedAt = Date.now();
     try {
+      const statAsync = promisify(stat);
+      const stats = await statAsync(projectPath);
+      createdAt = stats.birthtimeMs;
+      updatedAt = stats.mtimeMs;
+    } catch {
+    }
+    try {
       if (process.platform === "darwin" || process.platform === "linux") {
         const duArgs = process.platform === "darwin" ? ["-sk", projectPath] : ["-sb", projectPath];
         const { stdout: output } = await execAsync(`du ${duArgs.join(" ")}`, {
           maxBuffer: 10 * 1024 * 1024
           // 10MB buffer
         });
-        console.log(`du output for ${projectPath}:`, output);
         const match = output.trim().match(/^(\d+)/);
         if (match) {
           const sizeInKB = parseInt(match[1], 10);
           size = process.platform === "darwin" ? sizeInKB * 1024 : sizeInKB;
-          console.log(`Calculated size: ${size}`);
         }
       } else if (process.platform === "win32") {
         const { stdout: output } = await execAsync(
           `powershell -NoProfile -Command "'{0:N0}' - ((Get-ChildItem -Path '${projectPath}' -Recurse -File -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum | Select-Object -First 1)"`,
           {
-            cwd: projectPath,
             maxBuffer: 10 * 1024 * 1024
           }
         );

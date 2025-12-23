@@ -428,6 +428,16 @@ ipcMain.handle('get-project-stats', async (_, projectPath: string) => {
     let createdAt = Date.now()
     let updatedAt = Date.now()
 
+    // 首先获取项目的根目录时间戳
+    try {
+      const statAsync = promisify(stat)
+      const stats = await statAsync(projectPath)
+      createdAt = stats.birthtimeMs
+      updatedAt = stats.mtimeMs
+    } catch {
+      // 如果获取根目录时间失败，使用当前时间
+    }
+
     // 使用系统 du 命令获取目录大小（比递归遍历快得多）
     try {
       if (process.platform === 'darwin' || process.platform === 'linux') {
@@ -438,21 +448,17 @@ ipcMain.handle('get-project-stats', async (_, projectPath: string) => {
           maxBuffer: 10 * 1024 * 1024, // 10MB buffer
         })
 
-        console.log(`du output for ${projectPath}:`, output)
-
         // 输出格式: "12345\tpath" 或 "12345 path"
         const match = output.trim().match(/^(\d+)/)
         if (match) {
           const sizeInKB = parseInt(match[1], 10)
           size = process.platform === 'darwin' ? sizeInKB * 1024 : sizeInKB
-          console.log(`Calculated size: ${size}`)
         }
       } else if (process.platform === 'win32') {
         // Windows: 使用 PowerShell 的 Get-ChildItem
         const { stdout: output } = await execAsync(
           `powershell -NoProfile -Command "'{0:N0}' - ((Get-ChildItem -Path '${projectPath}' -Recurse -File -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum | Select-Object -First 1)"`,
           {
-            cwd: projectPath,
             maxBuffer: 10 * 1024 * 1024,
           }
         )
