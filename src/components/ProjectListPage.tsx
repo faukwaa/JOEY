@@ -361,49 +361,19 @@ export function ProjectListPage() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* 扫描/停止 */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleScanAll}
-              disabled={!scanning && !currentScanFolder}
-            >
-              {scanning ? (
-                <>
-                  <RefreshCwIcon className="h-4 w-4 mr-2" />
-                  停止扫描
-                </>
-              ) : (
-                <>
-                  <RefreshCwIcon className="h-4 w-4 mr-2" />
-                  立即扫描
-                </>
-              )}
-            </Button>
+            {/* 重新扫描 - 只在有项目时显示 */}
+            {projects.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleScanAll}
+              >
+                <RefreshCwIcon className="h-4 w-4 mr-2" />
+                重新扫描
+              </Button>
+            )}
           </div>
         </div>
-
-        {/* 进度条 */}
-        {scanning && (
-          <div className="flex flex-col gap-2">
-            <div className="text-sm text-muted-foreground">
-              {scanProgress.message || '扫描中...'}
-              {scanProgress.total > 0 && (
-                <span> ({scanProgress.current}/{scanProgress.total})</span>
-              )}
-            </div>
-            <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
-              {scanProgress.total > 0 ? (
-                <div
-                  className="bg-primary h-full transition-all duration-300 ease-out"
-                  style={{ width: `${Math.round((scanProgress.current / scanProgress.total) * 100)}%` }}
-                />
-              ) : (
-                <div className="bg-primary h-full animate-pulse" style={{ width: '30%' }} />
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* 项目列表 */}
