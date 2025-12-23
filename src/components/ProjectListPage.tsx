@@ -438,7 +438,7 @@ export function ProjectListPage() {
           </p>
           {/* 进度条 */}
           {scanning && (
-            <div className="flex flex-col gap-2 w-full max-w-md mb-4 animate-in fade-in slide-in-from-top-4 duration-300">
+            <div className="flex flex-col gap-2 w-full max-w-md mb-4 animate-in fade-in duration-500">
               <div className="text-sm text-muted-foreground">
                 {scanProgress.message || '扫描中...'}
                 {scanProgress.total > 0 && (
