@@ -68,7 +68,7 @@ export function ProjectListPage() {
               const stats = await window.electronAPI.getProjectStats(p.path)
 
               return {
-                id: btoa(p.path), // 使用路径作为 ID
+                id: encodeURIComponent(p.path), // 使用 URL 编码处理中文路径
                 name: p.name,
                 path: p.path,
                 createdAt: new Date(), // TODO: 从文件系统获取
