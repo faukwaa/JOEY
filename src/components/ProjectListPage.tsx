@@ -9,6 +9,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
   SortAscIcon,
   SortDescIcon,
   RefreshCwIcon,
@@ -20,6 +30,7 @@ export function ProjectListPage() {
   const [loading, setLoading] = useState(true)
   const [scanning, setScanning] = useState(false)
   const [scanCancelled, setScanCancelled] = useState(false)
+  const [showStopConfirm, setShowStopConfirm] = useState(false)
   const [sortBy, setSortBy] = useState<'name' | 'createdAt' | 'updatedAt' | 'size'>('updatedAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [scanProgress, setScanProgress] = useState({ stage: '', current: 0, total: 0, message: '' })
@@ -218,15 +229,27 @@ export function ProjectListPage() {
     ))
   }
 
+  const handleStopScan = () => {
+    setShowStopConfirm(true)
+  }
+
+  const confirmStopScan = () => {
+    setShowStopConfirm(false)
+    setScanCancelled(true)
+  }
+
+  const cancelStopScan = () => {
+    setShowStopConfirm(false)
+  }
+
   const handleScanAll = async () => {
     if (!currentScanFolder) {
       console.warn('没有选中的扫描目录')
       return
     }
-    // 如果正在扫描，则停止扫描
+    // 如果正在扫描，显示确认对话框
     if (scanning) {
-      console.log('点击停止扫描')
-      setScanCancelled(true)
+      handleStopScan()
       return
     }
 
@@ -442,6 +465,24 @@ export function ProjectListPage() {
           onToggleFavorite={handleToggleFavorite}
         />
       )}
+
+      {/* 停止扫描确认对话框 */}
+      <AlertDialog open={showStopConfirm} onOpenChange={setShowStopConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认停止扫描？</AlertDialogTitle>
+            <AlertDialogDescription>
+              当前已扫描 {scanProgress.current} 个项目，停止后将保留这些已扫描的项目，未扫描的项目将被忽略。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelStopScan}>取消</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmStopScan} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              确认停止
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
