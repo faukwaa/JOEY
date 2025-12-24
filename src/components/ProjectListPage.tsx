@@ -304,7 +304,7 @@ export function ProjectListPage() {
         const projectsWithDetails: Project[] = []
 
         for (let i = 0; i < scanResult.projects.length; i++) {
-          const p = scanResult.projects[i]
+          const p = scanResult.projects[i] as { name: string; path: string }
           console.log(`处理第 ${i + 1}/${scanResult.projects.length} 个项目: ${p.name}`)
 
           // 检查是否已取消
@@ -484,13 +484,13 @@ export function ProjectListPage() {
                 )}
               </div>
               <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
-                {scanProgress.stage === 'processing' ? (
+                {scanProgress.stage === 'processing' && scanProgress.total > 0 ? (
                   <div
                     className="bg-primary h-full transition-all duration-300 ease-out"
                     style={{ width: `${Math.round((scanProgress.current / scanProgress.total) * 100)}%` }}
                   />
                 ) : (
-                  <div className="bg-primary h-full animate-pulse" style={{ width: '30%' }} />
+                  <div className="bg-primary h-full" style={{ width: '0%' }} />
                 )}
               </div>
             </div>
