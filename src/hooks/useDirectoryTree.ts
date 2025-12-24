@@ -28,9 +28,9 @@ export function useDirectoryTree() {
       }
     })
 
-    // 过滤出属于当前扫描根目录且有项目的路径
+    // 过滤出属于当前扫描根目录的路径（移除 dirsWithProjects.has 的检查）
     const relativePaths = scannedDirs
-      .filter(dir => dir.startsWith(rootPath) && dirsWithProjects.has(dir))
+      .filter(dir => dir.startsWith(rootPath))
       .map(dir => dir.slice(rootPath.length).replace(/^\//, '').split('/'))
       .filter(parts => parts.length > 0 && parts[0] !== '')
 
