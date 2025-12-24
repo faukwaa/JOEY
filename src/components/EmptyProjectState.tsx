@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 
 interface EmptyProjectStateProps {
   currentFolder: string
+  scanningFolderName?: string  // 正在扫描的目录名（用于显示扫描状态）
   isScanning: boolean
   scanProgress: { stage: string; current: number; total: number; message: string }
   onScan: () => void
@@ -10,17 +11,20 @@ interface EmptyProjectStateProps {
 
 export function EmptyProjectState({
   currentFolder,
+  scanningFolderName,
   isScanning,
   scanProgress,
   onScan
 }: EmptyProjectStateProps) {
+  // 如果正在扫描，使用扫描目录名；否则使用当前选中的目录名
+  const displayFolderName = isScanning && scanningFolderName ? scanningFolderName : (currentFolder ? currentFolder.split('/').pop() : '')
   const folderName = currentFolder ? currentFolder.split('/').pop() : ''
 
   return (
     <div className="flex flex-col items-center justify-center h-full text-center p-12">
       <h3 className="text-lg font-semibold mb-2">
         {isScanning
-          ? `正在扫描 ${folderName} 目录`
+          ? `正在扫描 ${displayFolderName} 目录`
           : folderName
             ? `${folderName} 没有找到项目`
             : '还没有项目'

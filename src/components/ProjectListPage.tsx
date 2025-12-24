@@ -12,6 +12,7 @@ interface ProjectListPageProps {
   currentFolderProjects: Project[]
   currentScanFolder: string
   folderName: string
+  rootFolderName: string  // 根目录名称（用于显示扫描状态）
   loading: boolean
   getCurrentScanState: (folder: string) => { scanning: boolean; progress: { stage: string; current: number; total: number; message: string }; cancelled: boolean }
   startScan: (folder: string, onProgressUpdate?: () => void) => Promise<void>
@@ -26,6 +27,7 @@ export function ProjectListPage({
   currentFolderProjects,
   currentScanFolder,
   folderName,
+  rootFolderName,
   loading,
   getCurrentScanState,
   startScan,
@@ -166,6 +168,7 @@ export function ProjectListPage({
         // 扫描中，显示进度条（即使有旧项目也显示进度）
         <EmptyProjectState
           currentFolder={folderName}
+          scanningFolderName={rootFolderName}
           isScanning={true}
           scanProgress={currentScanState.progress}
           onScan={handleScanAll}

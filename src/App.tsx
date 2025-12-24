@@ -66,7 +66,7 @@ export function App() {
   // 获取当前选中路径的项目
   const getSelectedPathData = useCallback(() => {
     if (!selectedPath) {
-      return { projects: [], folderName: "", scanFolder: "" }
+      return { projects: [], folderName: "", scanFolder: "", rootFolderName: "" }
     }
 
     // 找到包含 selectedPath 的扫描根目录
@@ -76,10 +76,12 @@ export function App() {
 
     // 提取显示名称
     const folderName = selectedPath.split("/").pop() || selectedPath
+    // 提取根目录名称（用于显示扫描状态）
+    const rootFolderName = scanFolder ? scanFolder.split("/").pop() || scanFolder : folderName
 
     // 如果没有找到扫描根目录（还未扫描过），返回空项目列表
     if (!scanFolder) {
-      return { projects: [], folderName, scanFolder: selectedPath }
+      return { projects: [], folderName, scanFolder: selectedPath, rootFolderName: folderName }
     }
 
     // 获取该扫描根目录下的所有项目
@@ -93,10 +95,10 @@ export function App() {
       return p.path.startsWith(selectedPath + "/")
     })
 
-    return { projects: filteredProjects, folderName, scanFolder }
+    return { projects: filteredProjects, folderName, scanFolder, rootFolderName }
   }, [selectedPath, folderScannedDirs, allProjects])
 
-  const { projects: currentFolderProjects, folderName, scanFolder } = getSelectedPathData()
+  const { projects: currentFolderProjects, folderName, scanFolder, rootFolderName } = getSelectedPathData()
 
   // 获取当前扫描目录（用于扫描操作）
   const currentScanFolderForOps = scanFolder || selectedPath
@@ -149,6 +151,7 @@ export function App() {
             currentFolderProjects={currentFolderProjects}
             currentScanFolder={currentScanFolderForOps}
             folderName={folderName}
+            rootFolderName={rootFolderName}
             loading={loading}
             getCurrentScanState={getCurrentScanState}
             startScan={startScan}
