@@ -11,11 +11,26 @@ export interface TreeNode {
 }
 
 export function useDirectoryTree() {
-  // 将扫描过的目录列表转换为树形结构
-  const buildTree = useCallback((scannedDirs: string[], rootPath: string): TreeNode => {
-    // 过滤出属于当前扫描根目录的路径
+  // 将扫描过的目录列表转换为树形结构，只包含有项目的文件夹
+  const buildTree = useCallback((scannedDirs: string[], rootPath: string, projectPaths: string[]): TreeNode => {
+    // 找到所有有项目的目录
+    const dirsWithProjects = new Set<string>()
+    projectPaths.forEach(projectPath => {
+      // 找到项目所属的所有父目录
+      let currentPath = projectPath
+      while (currentPath !== rootPath && currentPath.startsWith(rootPath)) {
+        dirsWithProjects.add(currentPath)
+        const parentPath = currentPath.substring(0, currentPath.lastIndexOf('/'))
+        if (parentPath === rootPath || !parentPath.startsWith(rootPath)) {
+          break
+        }
+        currentPath = parentPath
+      }
+    })
+
+    // 过滤出属于当前扫描根目录且有项目的路径
     const relativePaths = scannedDirs
-      .filter(dir => dir.startsWith(rootPath))
+      .filter(dir => dir.startsWith(rootPath) && dirsWithProjects.has(dir))
       .map(dir => dir.slice(rootPath.length).replace(/^\//, '').split('/'))
       .filter(parts => parts.length > 0 && parts[0] !== '')
 
@@ -26,7 +41,7 @@ export function useDirectoryTree() {
       depth: 0,
       children: [],
       isExpanded: true,
-      hasProjects: false
+      hasProjects: dirsWithProjects.has(rootPath)
     }
 
     const nodeMap = new Map<string, TreeNode>()
@@ -40,47 +55,27 @@ export function useDirectoryTree() {
         const part = parts[i]
         currentPath = i === 0 ? `${rootPath}/${part}` : `${currentPath}/${part}`
 
-        if (!nodeMap.has(currentPath)) {
+        // 只添加有项目的节点
+        if (!nodeMap.has(currentPath) && dirsWithProjects.has(currentPath)) {
           const newNode: TreeNode = {
             name: part,
             path: currentPath,
             depth: i + 1,
             children: [],
             isExpanded: false,
-            hasProjects: false
+            hasProjects: dirsWithProjects.has(currentPath)
           }
           currentNode.children.push(newNode)
           nodeMap.set(currentPath, newNode)
         }
 
-        currentNode = nodeMap.get(currentPath)!
-      }
-    }
-
-    return root
-  }, [])
-
-  // 扁平化树为列表（用于渲染）
-  const flattenTree = useCallback((tree: TreeNode, maxDepth: number = 2): TreeNode[] => {
-    const result: TreeNode[] = []
-    const stack: { node: TreeNode; depth: number }[] = [{ node: tree, depth: 0 }]
-
-    while (stack.length > 0) {
-      const { node, depth } = stack.pop()!
-
-      if (depth > 0) {
-        result.push(node)
-      }
-
-      if (node.isExpanded || depth < maxDepth) {
-        // 反向添加子节点，这样正序遍历时子节点是正序的
-        for (let i = node.children.length - 1; i >= 0; i--) {
-          stack.push({ node: node.children[i], depth: depth + 1 })
+        if (nodeMap.has(currentPath)) {
+          currentNode = nodeMap.get(currentPath)!
         }
       }
     }
 
-    return result
+    return root
   }, [])
 
   // 切换节点的展开/折叠状态
@@ -97,24 +92,8 @@ export function useDirectoryTree() {
     return toggle(tree)
   }, [])
 
-  // 更新节点的 hasProjects 状态
-  const updateProjectFlags = useCallback((tree: TreeNode, projectPaths: string[]): TreeNode => {
-    const update = (node: TreeNode): TreeNode => {
-      const hasProjects = projectPaths.some(path => path.startsWith(node.path))
-
-      return {
-        ...node,
-        hasProjects,
-        children: node.children.map(update)
-      }
-    }
-    return update(tree)
-  }, [])
-
   return {
     buildTree,
-    flattenTree,
-    toggleNode,
-    updateProjectFlags
+    toggleNode
   }
 }
