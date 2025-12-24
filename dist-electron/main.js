@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain, shell, dialog } from "electron";
 import path, { dirname, join } from "path";
-import { existsSync, stat, readdir, writeFileSync, readFileSync, mkdirSync } from "fs";
+import { existsSync, stat, readdir, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { fileURLToPath } from "url";
 import { exec } from "child_process";
 import { promisify } from "util";
@@ -62,13 +62,25 @@ const getProjectsCache = () => {
   }
   return null;
 };
-const saveProjectsCache = (projects, folders, scannedDirs) => {
+const saveProjectsCache = (projects, folders, scannedDirs, folder) => {
   try {
     const cachePath = getProjectsCachePath();
+    let existingCache = null;
+    try {
+      const data = readFileSync(cachePath, "utf-8");
+      existingCache = JSON.parse(data);
+    } catch {
+    }
+    const scannedDirsMap = existingCache?.scannedDirsMap || {};
+    if (folder && scannedDirs) {
+      scannedDirsMap[folder] = scannedDirs;
+    }
     const cache = {
       projects,
       folders,
       scannedDirs: scannedDirs || [],
+      // 向后兼容
+      scannedDirsMap,
       scannedAt: (/* @__PURE__ */ new Date()).toISOString()
     };
     writeFileSync(cachePath, JSON.stringify(cache, null, 2));
@@ -309,8 +321,8 @@ ipcMain.handle("remove-scan-folder", async (_, folder) => {
   const newFolders = folders.filter((f) => f !== folder);
   return saveScanFolders(newFolders);
 });
-ipcMain.handle("save-projects-cache", async (_, projects, folders, scannedDirs) => {
-  return saveProjectsCache(projects, folders, scannedDirs);
+ipcMain.handle("save-projects-cache", async (_, projects, folders, scannedDirs, folder) => {
+  return saveProjectsCache(projects, folders, scannedDirs, folder);
 });
 ipcMain.handle("get-project-stats", async (_, projectPath) => {
   try {

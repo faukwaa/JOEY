@@ -144,36 +144,35 @@ export function useFolderScanning() {
           const foldersResult = await window.electronAPI.getScanFolders()
           const folders = foldersResult.folders || []
 
-          // 使用函数式更新获取最新的项目列表和扫描目录
-          const { serializedProjects, scannedDirsList } = await new Promise<{ serializedProjects: unknown[]; scannedDirsList: string[] }>((resolve) => {
+          // 使用函数式更新获取最新的项目列表
+          const serializedProjects = await new Promise<unknown[]>((resolve) => {
             setAllProjects(prev => {
               const result = prev.filter(p => p.scanFolder !== folder).concat(projectsWithDetails)
-              resolve({
-                serializedProjects: result.map(p => ({
-                  name: p.name,
-                  path: p.path,
-                  scanFolder: p.scanFolder,
-                  createdAt: p.createdAt.toISOString(),
-                  updatedAt: p.updatedAt.toISOString(),
-                  addedAt: p.addedAt.toISOString(),
-                  size: p.size,
-                  hasNodeModules: p.hasNodeModules,
-                  gitBranch: p.gitBranch,
-                  gitStatus: p.gitStatus,
-                  gitChanges: p.gitChanges,
-                  packageManager: p.packageManager,
-                  favorite: p.favorite,
-                })),
-                scannedDirsList: folderScannedDirs.get(folder) || []
-              })
+              resolve(result.map(p => ({
+                name: p.name,
+                path: p.path,
+                scanFolder: p.scanFolder,
+                createdAt: p.createdAt.toISOString(),
+                updatedAt: p.updatedAt.toISOString(),
+                addedAt: p.addedAt.toISOString(),
+                size: p.size,
+                hasNodeModules: p.hasNodeModules,
+                gitBranch: p.gitBranch,
+                gitStatus: p.gitStatus,
+                gitChanges: p.gitChanges,
+                packageManager: p.packageManager,
+                favorite: p.favorite,
+              })))
               return result
             })
           })
 
+          // 直接使用 scanResult.scannedDirs 而不是从 folderScannedDirs 获取
           await window.electronAPI.saveProjectsCache(
             serializedProjects,
             folders,
-            scannedDirsList
+            scanResult.scannedDirs || [],
+            folder  // 传递 folder 参数，用于存储到 scannedDirsMap
           )
           console.log('项目列表已保存到缓存')
         } catch (error) {
@@ -198,7 +197,7 @@ export function useFolderScanning() {
       })
       scanningRefs.current.delete(folder)
     }
-  }, [folderScanStates, folderScannedDirs])
+  }, [folderScanStates])
 
   // 停止扫描
   const stopScan = useCallback((folder: string) => {

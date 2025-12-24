@@ -92,13 +92,41 @@ const getProjectsCache = () => {
 }
 
 // 保存项目缓存
-const saveProjectsCache = (projects: unknown[], folders: string[], scannedDirs?: string[]) => {
+// 新的缓存结构：scannedDirsMap 是一个对象，映射文件夹到扫描路径数组
+type CacheData = {
+  projects: unknown[]
+  folders: string[]
+  scannedDirs?: string[]  // 向后兼容
+  scannedDirsMap?: Record<string, string[]>  // 新格式：映射文件夹到扫描路径
+  scannedAt: string
+}
+
+const saveProjectsCache = (projects: unknown[], folders: string[], scannedDirs?: string[], folder?: string) => {
   try {
     const cachePath = getProjectsCachePath()
-    const cache = {
+
+    // 尝试读取现有缓存
+    let existingCache: CacheData | null = null
+    try {
+      const data = readFileSync(cachePath, 'utf-8')
+      existingCache = JSON.parse(data)
+    } catch {
+      // 文件不存在或无法读取，创建新缓存
+    }
+
+    // 合并扫描目录映射
+    const scannedDirsMap: Record<string, string[]> = existingCache?.scannedDirsMap || {}
+
+    // 如果提供了 folder 和 scannedDirs，更新映射
+    if (folder && scannedDirs) {
+      scannedDirsMap[folder] = scannedDirs
+    }
+
+    const cache: CacheData = {
       projects,
       folders,
-      scannedDirs: scannedDirs || [],
+      scannedDirs: scannedDirs || [],  // 向后兼容
+      scannedDirsMap,
       scannedAt: new Date().toISOString(),
     }
     writeFileSync(cachePath, JSON.stringify(cache, null, 2))
@@ -435,8 +463,8 @@ ipcMain.handle('remove-scan-folder', async (_, folder: string) => {
 })
 
 // 保存项目缓存（由前端调用）
-ipcMain.handle('save-projects-cache', async (_, projects: unknown[], folders: string[], scannedDirs?: string[]) => {
-  return saveProjectsCache(projects, folders, scannedDirs)
+ipcMain.handle('save-projects-cache', async (_, projects: unknown[], folders: string[], scannedDirs?: string[], folder?: string) => {
+  return saveProjectsCache(projects, folders, scannedDirs, folder)
 })
 
 // 获取项目统计信息

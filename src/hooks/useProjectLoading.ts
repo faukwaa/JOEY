@@ -66,10 +66,20 @@ export function useProjectLoading() {
         onProjectsLoaded?.(cachedProjects)
 
         // 加载扫描过的目录
-        if (cache.scannedDirs && cache.scannedDirs.length > 0) {
-          // 为每个扫描根目录过滤出属于它的扫描路径
+        // 优先使用 scannedDirsMap（新格式），回退到 scannedDirs（旧格式）
+        const scannedDirsMap = cache.scannedDirsMap || {}
+        const scannedDirs = cache.scannedDirs || []
+
+        if (Object.keys(scannedDirsMap).length > 0) {
+          // 使用新格式：从 scannedDirsMap 读取每个文件夹的扫描路径
           for (const folder of folders) {
-            const folderDirs = cache.scannedDirs.filter((dir: string) =>
+            const folderDirs = scannedDirsMap[folder] || []
+            onScannedDirsLoaded?.(folder, folderDirs)
+          }
+        } else if (scannedDirs.length > 0) {
+          // 使用旧格式：为每个扫描根目录过滤出属于它的扫描路径
+          for (const folder of folders) {
+            const folderDirs = scannedDirs.filter((dir: string) =>
               dir === folder || dir.startsWith(folder + '/')
             )
             onScannedDirsLoaded?.(folder, folderDirs)

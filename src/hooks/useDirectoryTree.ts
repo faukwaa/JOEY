@@ -11,16 +11,18 @@ export interface TreeNode {
 }
 
 export function useDirectoryTree() {
-  // 将扫描过的目录列表转换为树形结构，只包含有项目的文件夹
+  // 将扫描过的目录列表转换为树形结构
   const buildTree = useCallback((scannedDirs: string[], rootPath: string, projectPaths: string[]): TreeNode => {
-    // 找到所有有项目的目录
+    // 找到所有包含项目或有项目子目录的目录（用于标记）
     const dirsWithProjects = new Set<string>()
     projectPaths.forEach(projectPath => {
-      // 找到项目所属的所有父目录
       let currentPath = projectPath
+      // 向上遍历所有父目录，直到 rootPath
       while (currentPath !== rootPath && currentPath.startsWith(rootPath)) {
         dirsWithProjects.add(currentPath)
-        const parentPath = currentPath.substring(0, currentPath.lastIndexOf('/'))
+        const lastSlashIndex = currentPath.lastIndexOf('/')
+        if (lastSlashIndex === -1) break
+        const parentPath = currentPath.substring(0, lastSlashIndex)
         if (parentPath === rootPath || !parentPath.startsWith(rootPath)) {
           break
         }
@@ -28,13 +30,7 @@ export function useDirectoryTree() {
       }
     })
 
-    // 过滤出属于当前扫描根目录的路径（移除 dirsWithProjects.has 的检查）
-    const relativePaths = scannedDirs
-      .filter(dir => dir.startsWith(rootPath))
-      .map(dir => dir.slice(rootPath.length).replace(/^\//, '').split('/'))
-      .filter(parts => parts.length > 0 && parts[0] !== '')
-
-    // 构建树
+    // 构建树的辅助函数
     const root: TreeNode = {
       name: rootPath.split('/').pop() || rootPath,
       path: rootPath,
@@ -44,34 +40,49 @@ export function useDirectoryTree() {
       hasProjects: dirsWithProjects.has(rootPath)
     }
 
+    // 使用 Map 存储路径到节点的映射
     const nodeMap = new Map<string, TreeNode>()
     nodeMap.set(rootPath, root)
 
-    for (const parts of relativePaths) {
+    // 遍历所有扫描过的目录
+    for (const dir of scannedDirs) {
+      // 只处理属于当前根目录的路径
+      if (!dir.startsWith(rootPath) || dir === rootPath) {
+        continue
+      }
+
+      // 将路径拆分为部分
+      const relativePath = dir.slice(rootPath.length + 1)
+      const parts = relativePath.split('/')
+      if (parts.length === 0 || parts[0] === '') {
+        continue
+      }
+
+      // 从根节点开始，逐层创建节点
       let currentPath = rootPath
       let currentNode = root
 
       for (let i = 0; i < parts.length; i++) {
         const part = parts[i]
-        currentPath = i === 0 ? `${rootPath}/${part}` : `${currentPath}/${part}`
+        const newPath = i === 0 ? `${rootPath}/${part}` : `${currentPath}/${part}`
 
-        // 只添加有项目的节点
-        if (!nodeMap.has(currentPath) && dirsWithProjects.has(currentPath)) {
+        // 如果节点不存在，创建它
+        if (!nodeMap.has(newPath)) {
           const newNode: TreeNode = {
             name: part,
-            path: currentPath,
+            path: newPath,
             depth: i + 1,
             children: [],
             isExpanded: false,
-            hasProjects: dirsWithProjects.has(currentPath)
+            hasProjects: dirsWithProjects.has(newPath)
           }
           currentNode.children.push(newNode)
-          nodeMap.set(currentPath, newNode)
+          nodeMap.set(newPath, newNode)
         }
 
-        if (nodeMap.has(currentPath)) {
-          currentNode = nodeMap.get(currentPath)!
-        }
+        // 移动到新节点
+        currentNode = nodeMap.get(newPath)!
+        currentPath = newPath
       }
     }
 

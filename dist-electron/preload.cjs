@@ -22,7 +22,7 @@ electron.contextBridge.exposeInMainWorld("electronAPI", {
   addScanFolder: (folder) => electron.ipcRenderer.invoke("add-scan-folder", folder),
   removeScanFolder: (folder) => electron.ipcRenderer.invoke("remove-scan-folder", folder),
   getProjectStats: (projectPath) => electron.ipcRenderer.invoke("get-project-stats", projectPath),
-  saveProjectsCache: (projects, folders, scannedDirs) => electron.ipcRenderer.invoke("save-projects-cache", projects, folders, scannedDirs),
+  saveProjectsCache: (projects, folders, scannedDirs, folder) => electron.ipcRenderer.invoke("save-projects-cache", projects, folders, scannedDirs, folder),
   // 扫描进度监听
   onScanProgress: (callback) => {
     const handler = (_, progress) => {

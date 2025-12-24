@@ -24,7 +24,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   addScanFolder: (folder: string) => ipcRenderer.invoke('add-scan-folder', folder),
   removeScanFolder: (folder: string) => ipcRenderer.invoke('remove-scan-folder', folder),
   getProjectStats: (projectPath: string) => ipcRenderer.invoke('get-project-stats', projectPath),
-  saveProjectsCache: (projects: unknown[], folders: string[], scannedDirs?: string[]) => ipcRenderer.invoke('save-projects-cache', projects, folders, scannedDirs),
+  saveProjectsCache: (projects: unknown[], folders: string[], scannedDirs?: string[], folder?: string) => ipcRenderer.invoke('save-projects-cache', projects, folders, scannedDirs, folder),
   // 扫描进度监听
   onScanProgress: (callback) => {
     const handler = (_: unknown, progress: { stage: string; current: number; total: number; message: string }) => {
@@ -44,7 +44,7 @@ declare global {
       on: (channel: string, callback: (...args: unknown[]) => void) => void
       invoke: (channel: string, ...args: unknown[]) => Promise<unknown>
       scanProjects: (folders: string[]) => Promise<{ projects: unknown[]; scannedDirs: string[] }>
-      getProjectsCache: () => Promise<{ projects: unknown[]; folders: string[]; scannedDirs: string[]; scannedAt: string } | null>
+      getProjectsCache: () => Promise<{ projects: unknown[]; folders: string[]; scannedDirs?: string[]; scannedDirsMap?: Record<string, string[]>; scannedAt: string } | null>
       getGitInfo: (projectPath: string) => Promise<{ branch: string | null; status: 'clean' | 'modified' | 'error' | 'no-git'; changes: number }>
       openProjectFolder: (projectPath: string) => Promise<{ success: boolean }>
       selectFolders: () => Promise<{ folders: string[] }>
@@ -59,7 +59,7 @@ declare global {
         createdAt: string
         updatedAt: string
       }>
-      saveProjectsCache: (projects: unknown[], folders: string[], scannedDirs?: string[]) => Promise<{ success: boolean; error?: string }>
+      saveProjectsCache: (projects: unknown[], folders: string[], scannedDirs?: string[], folder?: string) => Promise<{ success: boolean; error?: string }>
       // 扫描进度事件
       onScanProgress: (callback: (progress: { stage: string; current: number; total: number; message: string }) => void) => () => void
     }
