@@ -19,12 +19,19 @@ export function EmptyProjectState({
   return (
     <div className="flex flex-col items-center justify-center h-full text-center p-12">
       <h3 className="text-lg font-semibold mb-2">
-        {folderName ? `${folderName} 没有找到项目` : '还没有项目'}
+        {isScanning
+          ? `正在扫描 ${folderName} 目录`
+          : folderName
+            ? `${folderName} 没有找到项目`
+            : '还没有项目'
+        }
       </h3>
       <p className="text-sm text-muted-foreground max-w-md mb-4">
-        {currentFolder
-          ? '点击"立即扫描"按钮扫描当前选中的目录'
-          : '在左侧选择一个扫描目录'
+        {isScanning
+          ? '正在搜索项目，请稍候...'
+          : currentFolder
+            ? '点击"立即扫描"按钮扫描当前选中的目录'
+            : '在左侧选择一个扫描目录'
         }
       </p>
 
