@@ -1,5 +1,5 @@
 import { FolderIcon, Trash2Icon, PlusIcon, ChevronRightIcon } from "lucide-react"
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { cn } from "@/lib/utils"
 import {
   SidebarGroup,
@@ -20,17 +20,12 @@ interface NavScanProps {
   onPathSelect: (path: string) => void
 }
 
-interface ScanFolderTree {
-  folder: string
-  tree: TreeNode
-  isExpanded: boolean
-}
-
 export function NavScan({ scannedDirs, projectPaths, onPathSelect }: NavScanProps) {
   const [scanFolders, setScanFolders] = useState<string[]>([])
-  const [folderTrees, setFolderTrees] = useState<Map<string, ScanFolderTree>>(new Map())
   const [selectedPath, setSelectedPath] = useState<string>("")
-  const { buildTree, toggleNode } = useDirectoryTree()
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
+  const { buildTree } = useDirectoryTree()
+  const hasInitialized = useRef(false)
 
   const handleSelectPath = useCallback((path: string) => {
     setSelectedPath(path)
@@ -40,58 +35,57 @@ export function NavScan({ scannedDirs, projectPaths, onPathSelect }: NavScanProp
     onPathSelect(path)
   }, [onPathSelect])
 
-  // 构建所有扫描目录的树
+  // 构建所有扫描目录的树（不包含展开状态，展开状态由 expandedFolders 管理）
   const folderTreesData = useMemo(() => {
-    const result: ScanFolderTree[] = []
+    const result: { folder: string; tree: TreeNode }[] = []
     for (const folder of scanFolders) {
-      // 如果没有 scannedDirs，使用 projectPaths 中的父目录来构建
       const dirsToUse = scannedDirs.length > 0 ? scannedDirs : projectPaths
       const tree = buildTree(dirsToUse, folder, projectPaths)
-      const existing = folderTrees.get(folder)
-      result.push({
-        folder,
-        tree,
-        isExpanded: existing?.isExpanded || false
-      })
+      result.push({ folder, tree })
     }
     return result
-  }, [scanFolders, scannedDirs, projectPaths, buildTree, folderTrees])
+  }, [scanFolders, scannedDirs, projectPaths, buildTree])
 
   // 加载已保存的扫描目录
-  const loadScanFolders = useCallback(async () => {
-    try {
-      const result = await window.electronAPI.getScanFolders()
-      const folders = result.folders || []
-      setScanFolders(folders)
+  useEffect(() => {
+    let cancelled = false
 
-      // 初始化文件夹树的展开状态
-      setFolderTrees(prev => {
-        const newMap = new Map(prev)
-        folders.forEach(folder => {
-          if (!newMap.has(folder)) {
-            newMap.set(folder, { folder, tree: null as unknown as TreeNode, isExpanded: false })
-          }
-        })
-        return newMap
-      })
-    } catch (error) {
-      console.error("加载扫描目录失败:", error)
+    const loadScanFolders = async () => {
+      try {
+        const result = await window.electronAPI.getScanFolders()
+        if (!cancelled) {
+          const folders = result.folders || []
+          setScanFolders(folders)
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error("加载扫描目录失败:", error)
+        }
+      }
+    }
+
+    loadScanFolders()
+
+    return () => {
+      cancelled = true
     }
   }, [])
 
-  // 组件挂载时加载扫描目录
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    loadScanFolders()
-  }, [loadScanFolders])
-
   // 如果扫描目录列表变化且当前没有选中，选中第一个
   useEffect(() => {
-    if (!selectedPath && scanFolders.length > 0) {
-      handleSelectPath(scanFolders[0])
+    if (!hasInitialized.current && scanFolders.length > 0 && !selectedPath) {
+      hasInitialized.current = true
+      const firstFolder = scanFolders[0]
+      // 使用 setTimeout 延迟状态更新以避免 cascading renders
+      setTimeout(() => {
+        setSelectedPath(firstFolder)
+        // 通知项目列表当前选中的目录（用于扫描）
+        window.dispatchEvent(new CustomEvent('selected-scan-folder', { detail: firstFolder }))
+        // 通知项目列表过滤显示该目录的项目
+        onPathSelect(firstFolder)
+      }, 0)
     }
-  }, [scanFolders, selectedPath, handleSelectPath])
-  /* eslint-enable react-hooks/set-state-in-effect */
+  }, [scanFolders, selectedPath, onPathSelect])
 
   const handleAddFolder = async () => {
     try {
@@ -101,7 +95,9 @@ export function NavScan({ scannedDirs, projectPaths, onPathSelect }: NavScanProp
         // 保存到配置
         await window.electronAPI.addScanFolder(newFolder)
         // 重新加载列表
-        await loadScanFolders()
+        const loadResult = await window.electronAPI.getScanFolders()
+        const folders = loadResult.folders || []
+        setScanFolders(folders)
         // 选中新添加的目录
         handleSelectPath(newFolder)
       }
@@ -113,10 +109,13 @@ export function NavScan({ scannedDirs, projectPaths, onPathSelect }: NavScanProp
   const handleRemoveFolder = async (folderPath: string) => {
     try {
       await window.electronAPI.removeScanFolder(folderPath)
-      await loadScanFolders()
+      // 重新加载列表
+      const loadResult = await window.electronAPI.getScanFolders()
+      const folders = loadResult.folders || []
+      setScanFolders(folders)
       // 如果删除的是当前选中的，选中第一个
       if (selectedPath === folderPath) {
-        const remaining = scanFolders.filter(f => f !== folderPath)
+        const remaining = folders.filter(f => f !== folderPath)
         if (remaining.length > 0) {
           handleSelectPath(remaining[0])
         }
@@ -126,32 +125,17 @@ export function NavScan({ scannedDirs, projectPaths, onPathSelect }: NavScanProp
     }
   }
 
-  const handleToggleFolder = useCallback((folder: string) => {
-    setFolderTrees(prev => {
-      const newMap = new Map(prev)
-      const existing = newMap.get(folder)
-      newMap.set(folder, {
-        folder,
-        tree: existing?.tree || folderTreesData.find(f => f.folder === folder)?.tree || null as unknown as TreeNode,
-        isExpanded: !existing?.isExpanded
-      })
-      return newMap
-    })
-  }, [folderTreesData])
-
-  const handleToggleNode = useCallback((folder: string, nodePath: string) => {
-    setFolderTrees(prev => {
-      const newMap = new Map(prev)
-      const existing = newMap.get(folder)
-      if (existing) {
-        newMap.set(folder, {
-          ...existing,
-          tree: toggleNode(existing.tree, nodePath)
-        })
+  const handleToggleFolder = useCallback((path: string) => {
+    setExpandedFolders(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(path)) {
+        newSet.delete(path)
+      } else {
+        newSet.add(path)
       }
-      return newMap
+      return newSet
     })
-  }, [toggleNode])
+  }, [])
 
   return (
     <>
@@ -173,15 +157,18 @@ export function NavScan({ scannedDirs, projectPaths, onPathSelect }: NavScanProp
           {/* 显示已保存的扫描目录 */}
           {scanFolders.length > 0 && (
             <SidebarMenu>
-              {folderTreesData.map(({ folder, tree, isExpanded }) => {
+              {folderTreesData.map(({ folder, tree }) => {
                 const folderName = folder.split('/').pop() || folder
                 const isSelected = selectedPath === folder
-                const hasChildren = tree.children.length > 0
+                const isExpanded = expandedFolders.has(folder)
+                // 只显示非项目文件夹作为子节点
+                const hasExpandableChildren = tree.children.some(child => !projectPaths.includes(child.path))
 
                 // 递归渲染树节点
                 const renderTreeNode = (node: TreeNode): React.ReactNode => {
-                  const nodeHasChildren = node.children.length > 0
+                  const nodeHasExpandableChildren = node.children.some(child => !projectPaths.includes(child.path))
                   const nodeIsSelected = selectedPath === node.path
+                  const nodeIsExpanded = expandedFolders.has(node.path)
 
                   return (
                     <div key={node.path}>
@@ -190,33 +177,37 @@ export function NavScan({ scannedDirs, projectPaths, onPathSelect }: NavScanProp
                           "group/data-[collapsible=icon]:hidden",
                           nodeIsSelected && "bg-accent"
                         )}
-                        style={{ paddingLeft: `${node.depth * 12}px` }}
+                        style={{ paddingLeft: `${(node.depth + 1) * 12}px` }}
                         onClick={() => handleSelectPath(node.path)}
                       >
-                        {nodeHasChildren && (
+                        {nodeHasExpandableChildren && (
                           <span
                             className="flex items-center justify-center w-4 h-4 rounded hover:bg-muted mr-1"
                             onClick={(e) => {
                               e.stopPropagation()
-                              handleToggleNode(folder, node.path)
+                              handleToggleFolder(node.path)
                             }}
                           >
                             <ChevronRightIcon
                               className={cn(
                                 'h-3 w-3 transition-transform',
-                                node.isExpanded && 'transform rotate-90'
+                                nodeIsExpanded && 'transform rotate-90'
                               )}
                             />
                           </span>
                         )}
-                        {!nodeHasChildren && <span className="w-5" />}
+                        {!nodeHasExpandableChildren && <span className="w-5" />}
                         <FolderIcon className={cn('h-4 w-4', node.hasProjects ? 'text-primary' : 'text-muted-foreground')} />
                         <span className={cn('flex-1 truncate', node.hasProjects && 'font-medium')}>
                           {node.name}
                         </span>
                       </SidebarMenuSubButton>
 
-                      {node.isExpanded && node.children.map(child => renderTreeNode(child))}
+                      {/* 展开的子节点 - 只显示非项目文件夹 */}
+                      {nodeIsExpanded && node.children
+                        .filter(child => !projectPaths.includes(child.path))
+                        .map(child => renderTreeNode(child))
+                      }
                     </div>
                   )
                 }
@@ -233,7 +224,7 @@ export function NavScan({ scannedDirs, projectPaths, onPathSelect }: NavScanProp
                           )}
                           onClick={() => handleSelectPath(folder)}
                         >
-                          {hasChildren && (
+                          {hasExpandableChildren && (
                             <span
                               className="flex items-center justify-center w-4 h-4 rounded hover:bg-muted mr-1"
                               onClick={(e) => {
@@ -249,7 +240,7 @@ export function NavScan({ scannedDirs, projectPaths, onPathSelect }: NavScanProp
                               />
                             </span>
                           )}
-                          {!hasChildren && <span className="w-5" />}
+                          {!hasExpandableChildren && <span className="w-5" />}
                           <FolderIcon className={cn('h-4 w-4', tree.hasProjects ? 'text-primary' : 'text-muted-foreground')} />
                           <span className={cn('flex-1 truncate', tree.hasProjects && 'font-medium')} title={folder}>
                             {folderName}
@@ -270,8 +261,11 @@ export function NavScan({ scannedDirs, projectPaths, onPathSelect }: NavScanProp
                           </div>
                         </SidebarMenuSubButton>
 
-                        {/* 子文件夹 */}
-                        {isExpanded && tree.children.map(child => renderTreeNode(child))}
+                        {/* 子文件夹 - 只显示非项目文件夹 */}
+                        {isExpanded && tree.children
+                          .filter(child => !projectPaths.includes(child.path))
+                          .map(child => renderTreeNode(child))
+                        }
                       </SidebarMenuSubItem>
                     </SidebarMenuSub>
                   </SidebarMenuItem>
