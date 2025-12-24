@@ -46,8 +46,8 @@ export function useFolderScanning() {
     })
     scanningRefs.current.set(folder, true)
 
-    // 清空该目录的项目列表，显示空状态页面（包括进度条）
-    setAllProjects(prev => prev.filter(p => p.scanFolder !== folder))
+    // 不再清空项目列表，保留之前扫描的结果
+    // 这样切换目录时不会看到空白页面
 
     try {
       console.log('调用 window.electronAPI.scanProjects')

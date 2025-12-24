@@ -162,10 +162,18 @@ export function ProjectListPage({
         <div className="flex items-center justify-center flex-1">
           <div className="text-muted-foreground">加载中...</div>
         </div>
+      ) : currentScanState.scanning ? (
+        // 扫描中，显示进度条（即使有旧项目也显示进度）
+        <EmptyProjectState
+          currentFolder={folderName}
+          isScanning={true}
+          scanProgress={currentScanState.progress}
+          onScan={handleScanAll}
+        />
       ) : currentFolderProjects.length === 0 ? (
         <EmptyProjectState
           currentFolder={folderName}
-          isScanning={currentScanState.scanning}
+          isScanning={false}
           scanProgress={currentScanState.progress}
           onScan={handleScanAll}
         />
