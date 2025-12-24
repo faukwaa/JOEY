@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { TreeView } from '@/components/TreeView'
 import { useDirectoryTree } from '@/hooks/useDirectoryTree'
 import type { TreeNode } from '@/hooks/useDirectoryTree'
