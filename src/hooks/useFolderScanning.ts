@@ -11,6 +11,7 @@ export interface FolderScanState {
 export function useFolderScanning() {
   const [allProjects, setAllProjects] = useState<Project[]>([])
   const [folderScanStates, setFolderScanStates] = useState<Map<string, FolderScanState>>(new Map())
+  const [folderScannedDirs, setFolderScannedDirs] = useState<Map<string, string[]>>(new Map())
   const scanningRefs = useRef<Map<string, boolean>>(new Map())
 
   // 获取当前目录的扫描状态
@@ -52,6 +53,15 @@ export function useFolderScanning() {
       console.log('调用 window.electronAPI.scanProjects')
       const scanResult = await window.electronAPI.scanProjects([folder])
       console.log('scanProjects 返回结果:', scanResult)
+
+      // 保存扫描过的目录
+      if (scanResult.scannedDirs) {
+        setFolderScannedDirs(prev => {
+          const newMap = new Map(prev)
+          newMap.set(folder, scanResult.scannedDirs)
+          return newMap
+        })
+      }
 
       if (scanResult.projects && scanResult.projects.length > 0) {
         console.log(`找到 ${scanResult.projects.length} 个项目，开始获取详细信息`)
@@ -203,14 +213,31 @@ export function useFolderScanning() {
     setAllProjects(projects)
   }, [])
 
+  // 获取某个目录的扫描路径
+  const getScannedDirs = useCallback((folder: string): string[] => {
+    return folderScannedDirs.get(folder) || []
+  }, [folderScannedDirs])
+
+  // 设置扫描路径（从缓存加载）
+  const setScannedDirs = useCallback((folder: string, dirs: string[]) => {
+    setFolderScannedDirs(prev => {
+      const newMap = new Map(prev)
+      newMap.set(folder, dirs)
+      return newMap
+    })
+  }, [])
+
   return {
     allProjects,
     setAllProjects,
     folderScanStates,
+    folderScannedDirs,
     getCurrentScanState,
     getCurrentFolderProjects,
     startScan,
     stopScan,
-    setInitialProjects
+    setInitialProjects,
+    getScannedDirs,
+    setScannedDirs
   }
 }

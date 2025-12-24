@@ -42,7 +42,10 @@ export function useProjectLoading() {
   }, [])
 
   // 加载项目列表（只从缓存加载，不自动扫描）
-  const loadProjects = useCallback(async (onProjectsLoaded?: (projects: Project[]) => void) => {
+  const loadProjects = useCallback(async (
+    onProjectsLoaded?: (projects: Project[]) => void,
+    onScannedDirsLoaded?: (folder: string, dirs: string[]) => void
+  ) => {
     setLoading(true)
     try {
       // 获取已保存的扫描目录
@@ -61,6 +64,17 @@ export function useProjectLoading() {
         console.log('从缓存加载项目列表')
         const cachedProjects = convertCachedProjects(cache.projects)
         onProjectsLoaded?.(cachedProjects)
+
+        // 加载扫描过的目录
+        if (cache.scannedDirs && cache.scannedDirs.length > 0) {
+          // 为每个扫描根目录过滤出属于它的扫描路径
+          for (const folder of folders) {
+            const folderDirs = cache.scannedDirs.filter((dir: string) =>
+              dir === folder || dir.startsWith(folder + '/')
+            )
+            onScannedDirsLoaded?.(folder, folderDirs)
+          }
+        }
       } else {
         // 没有缓存，显示空状态
         onProjectsLoaded?.([])

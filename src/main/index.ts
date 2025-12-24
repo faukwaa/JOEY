@@ -92,12 +92,13 @@ const getProjectsCache = () => {
 }
 
 // 保存项目缓存
-const saveProjectsCache = (projects: unknown[], folders: string[]) => {
+const saveProjectsCache = (projects: unknown[], folders: string[], scannedDirs?: string[]) => {
   try {
     const cachePath = getProjectsCachePath()
     const cache = {
       projects,
       folders,
+      scannedDirs: scannedDirs || [],
       scannedAt: new Date().toISOString(),
     }
     writeFileSync(cachePath, JSON.stringify(cache, null, 2))
@@ -233,6 +234,7 @@ function shouldSkipDirectory(dirName: string): boolean {
 async function scanDirectoryRecursively(
   dir: string,
   projects: Project[],
+  scannedDirs: Set<string>,
   maxDepth: number = 5,
   currentDepth: number = 0,
   onProgress?: (currentPath: string) => void
@@ -246,6 +248,9 @@ async function scanDirectoryRecursively(
   if (!existsSync(dir)) {
     return
   }
+
+  // 记录扫描过的目录
+  scannedDirs.add(dir)
 
   try {
     const readdirAsync = promisify(readdir)
@@ -275,7 +280,7 @@ async function scanDirectoryRecursively(
       }
 
       // 如果不是项目目录，继续扫描子目录
-      await scanDirectoryRecursively(fullPath, projects, maxDepth, currentDepth + 1, onProgress)
+      await scanDirectoryRecursively(fullPath, projects, scannedDirs, maxDepth, currentDepth + 1, onProgress)
     }
   } catch (error) {
     console.error(`Error scanning directory ${dir}:`, error)
@@ -284,6 +289,7 @@ async function scanDirectoryRecursively(
 
 ipcMain.handle('scan-projects', async (_event, folders: string[]) => {
   const projects: Project[] = []
+  const scannedDirs = new Set<string>()
   const sendProgress = (stage: string, current: number, total: number, message: string) => {
     if (win && !win.isDestroyed()) {
       win.webContents.send('scan-progress', { stage, current, total, message })
@@ -299,6 +305,9 @@ ipcMain.handle('scan-projects', async (_event, folders: string[]) => {
       continue
     }
 
+    // 记录根目录
+    scannedDirs.add(folder)
+
     // 首先检查根目录本身是否是项目
     if (isProjectDirectory(folder)) {
       const folderName = folder.split('/').pop() || folder
@@ -313,7 +322,7 @@ ipcMain.handle('scan-projects', async (_event, folders: string[]) => {
 
     // 递归扫描子目录
     try {
-      await scanDirectoryRecursively(folder, projects, 5, 0, (currentPath) => {
+      await scanDirectoryRecursively(folder, projects, scannedDirs, 5, 0, (currentPath) => {
         sendProgress('scanning', 0, 0, `扫描中: ${currentPath}`)
       })
     } catch (error) {
@@ -329,13 +338,17 @@ ipcMain.handle('scan-projects', async (_event, folders: string[]) => {
   )
 
   console.log(`总共找到 ${uniqueProjects.length} 个唯一项目`)
+  console.log(`扫描了 ${scannedDirs.size} 个目录`)
 
   // 保存到缓存
-  saveProjectsCache(uniqueProjects, folders)
+  saveProjectsCache(uniqueProjects, folders, Array.from(scannedDirs))
 
   sendProgress('complete', uniqueProjects.length, uniqueProjects.length, '扫描完成')
 
-  return { projects: uniqueProjects }
+  return {
+    projects: uniqueProjects,
+    scannedDirs: Array.from(scannedDirs)
+  }
 })
 
 // 读取项目缓存

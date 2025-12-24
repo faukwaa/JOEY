@@ -4,32 +4,42 @@ import { ProjectGrid } from '@/components/ProjectCard'
 import { ProjectControls } from '@/components/ProjectControls'
 import { EmptyProjectState } from '@/components/EmptyProjectState'
 import { ScanConfirmDialogs } from '@/components/ScanConfirmDialogs'
-import { useFolderScanning } from '@/hooks/useFolderScanning'
 import { useProjectActions } from '@/hooks/useProjectActions'
-import { useProjectLoading } from '@/hooks/useProjectLoading'
 
-export function ProjectListPage() {
+interface ProjectListPageProps {
+  allProjects: Project[]
+  setAllProjects: (projects: Project[] | ((prev: Project[]) => Project[])) => void
+  currentFolderProjects: Project[]
+  currentScanFolder: string
+  folderName: string
+  loading: boolean
+  getCurrentScanState: (folder: string) => { scanning: boolean; progress: { stage: string; current: number; total: number; message: string }; cancelled: boolean }
+  startScan: (folder: string, onProgressUpdate?: () => void) => Promise<void>
+  stopScan: (folder: string) => void
+  loadProjects: (onProjectsLoaded?: (projects: Project[]) => void, onScannedDirsLoaded?: (folder: string, dirs: string[]) => void) => Promise<void>
+  setInitialProjects: (projects: Project[]) => void
+}
+
+export function ProjectListPage({
+  allProjects,
+  setAllProjects,
+  currentFolderProjects,
+  currentScanFolder,
+  folderName,
+  loading,
+  getCurrentScanState,
+  startScan,
+  stopScan,
+  loadProjects,
+  setInitialProjects
+}: ProjectListPageProps) {
   const [showStopConfirm, setShowStopConfirm] = useState(false)
   const [showRescanConfirm, setShowRescanConfirm] = useState(false)
   const [sortBy, setSortBy] = useState<'name' | 'createdAt' | 'updatedAt' | 'size'>('updatedAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
-  const [currentScanFolder, setCurrentScanFolder] = useState<string>('')
 
-  // 使用 hooks
-  const { loading, loadProjects } = useProjectLoading()
-  const {
-    allProjects,
-    setAllProjects,
-    getCurrentScanState,
-    getCurrentFolderProjects,
-    startScan,
-    stopScan,
-    setInitialProjects
-  } = useFolderScanning()
   const { handleOpenProject, handleRefreshProject, handleDeleteProject, handleToggleFavorite } = useProjectActions()
 
-  // 当前目录的项目和状态
-  const currentFolderProjects = getCurrentFolderProjects(currentScanFolder)
   const currentScanState = getCurrentScanState(currentScanFolder)
 
   // 排序项目
@@ -54,17 +64,9 @@ export function ProjectListPage() {
     return sortOrder === 'asc' ? comparison : -comparison
   })
 
-  // 加载项目列表
-  useEffect(() => {
-    loadProjects((projects) => {
-      setInitialProjects(projects)
-    })
-  }, [loadProjects, setInitialProjects])
-
   // 监听扫描进度
   useEffect(() => {
     const cleanup = window.electronAPI.onScanProgress(() => {
-      // 忽略主进程的所有进度事件，每个目录的扫描状态由前端独立维护
       return
     })
     return cleanup
@@ -83,20 +85,6 @@ export function ProjectListPage() {
       window.removeEventListener('refresh-projects', handleRefresh)
     }
   }, [loadProjects, setInitialProjects])
-
-  // 监听选中的扫描目录变化
-  useEffect(() => {
-    const handleSelectedFolder = (event: Event) => {
-      const customEvent = event as CustomEvent<string>
-      const folder = customEvent.detail
-      setCurrentScanFolder(folder)
-    }
-
-    window.addEventListener('selected-scan-folder', handleSelectedFolder)
-    return () => {
-      window.removeEventListener('selected-scan-folder', handleSelectedFolder)
-    }
-  }, [])
 
   // 处理项目操作
   const handleToggleFavoriteWrapper = useCallback((project: Project) => {
@@ -176,7 +164,7 @@ export function ProjectListPage() {
         </div>
       ) : currentFolderProjects.length === 0 ? (
         <EmptyProjectState
-          currentFolder={currentScanFolder}
+          currentFolder={folderName}
           isScanning={currentScanState.scanning}
           scanProgress={currentScanState.progress}
           onScan={handleScanAll}
@@ -196,7 +184,7 @@ export function ProjectListPage() {
         showStopConfirm={showStopConfirm}
         showRescanConfirm={showRescanConfirm}
         scanProgressCurrent={currentScanState.progress.current}
-        currentFolder={currentScanFolder}
+        currentFolder={folderName}
         onStopConfirm={confirmStopScan}
         onStopCancel={cancelStopScan}
         onRescanConfirm={confirmRescan}

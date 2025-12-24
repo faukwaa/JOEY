@@ -7,7 +7,13 @@ import {
 } from "@/components/ui/sidebar"
 import { FolderOpenIcon } from "lucide-react"
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  scannedDirs: string[]
+  projectPaths: string[]
+  onPathSelect: (path: string) => void
+}
+
+export function AppSidebar({ scannedDirs, projectPaths, onPathSelect, ...props }: AppSidebarProps) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -17,7 +23,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <NavScan />
+        <NavScan
+          scannedDirs={scannedDirs}
+          projectPaths={projectPaths}
+          onPathSelect={onPathSelect}
+        />
       </SidebarContent>
       <SidebarRail />
     </Sidebar>
