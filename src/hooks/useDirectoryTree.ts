@@ -66,8 +66,8 @@ export function useDirectoryTree() {
         const part = parts[i]
         const newPath = i === 0 ? `${rootPath}/${part}` : `${currentPath}/${part}`
 
-        // 如果节点不存在，创建它
-        if (!nodeMap.has(newPath)) {
+        // 只创建包含项目的节点
+        if (!nodeMap.has(newPath) && dirsWithProjects.has(newPath)) {
           const newNode: TreeNode = {
             name: part,
             path: newPath,
@@ -80,9 +80,11 @@ export function useDirectoryTree() {
           nodeMap.set(newPath, newNode)
         }
 
-        // 移动到新节点
-        currentNode = nodeMap.get(newPath)!
-        currentPath = newPath
+        // 移动到新节点（如果存在）
+        if (nodeMap.has(newPath)) {
+          currentNode = nodeMap.get(newPath)!
+          currentPath = newPath
+        }
       }
     }
 
