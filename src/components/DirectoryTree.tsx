@@ -33,6 +33,13 @@ export function DirectoryTree({
   // 同步 tree 状态，保留展开状态
   useEffect(() => {
     if (treeValue !== prevTreeValueRef.current) {
+      if (!treeValue) {
+        // treeValue 为 null，直接设置为 null
+        setTree(null)
+        prevTreeValueRef.current = treeValue
+        return
+      }
+
       // 如果树结构变化了，需要更新但保留展开状态
       if (prevTreeValueRef.current && tree) {
         // 收集当前展开的节点路径
