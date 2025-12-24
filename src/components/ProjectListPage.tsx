@@ -24,24 +24,33 @@ import {
   RefreshCwIcon,
 } from 'lucide-react'
 
+// 目录扫描状态类型
+interface FolderScanState {
+  scanning: boolean
+  progress: { stage: string; current: number; total: number; message: string }
+  cancelled: boolean
+}
+
 export function ProjectListPage() {
-  const [projects, setProjects] = useState<Project[]>([])
-  const [allProjects, setAllProjects] = useState<Project[]>([]) // 保存所有项目
+  const [allProjects, setAllProjects] = useState<Project[]>([]) // 保存所有目录的项目
   const [loading, setLoading] = useState(true)
-  const [scanning, setScanning] = useState(false)
-  const scanCancelledRef = useRef(false)
   const [showStopConfirm, setShowStopConfirm] = useState(false)
   const [showRescanConfirm, setShowRescanConfirm] = useState(false)
   const [sortBy, setSortBy] = useState<'name' | 'createdAt' | 'updatedAt' | 'size'>('updatedAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
-  const [scanProgress, setScanProgress] = useState({ stage: '', current: 0, total: 0, message: '' })
   const [currentScanFolder, setCurrentScanFolder] = useState<string>('') // 当前选中的扫描目录
-  const scanningRef = useRef(false) // 扫描状态 ref，用于进度监听器判断
+  const [folderScanStates, setFolderScanStates] = useState<Map<string, FolderScanState>>(new Map()) // 每个目录的扫描状态
+  const scanningRefs = useRef<Map<string, boolean>>(new Map()) // 每个目录的扫描状态 ref
 
-  // 调试：监听 projects 变化
-  useEffect(() => {
-    console.log(`projects 状态变化: ${projects.length} 个项目, loading: ${loading}, scanning: ${scanning}`)
-  }, [projects, loading, scanning])
+  // 获取当前目录的项目
+  const currentFolderProjects = allProjects.filter(p => p.scanFolder === currentScanFolder)
+
+  // 获取当前目录的扫描状态
+  const currentScanState = folderScanStates.get(currentScanFolder) || {
+    scanning: false,
+    progress: { stage: '', current: 0, total: 0, message: '' },
+    cancelled: false
+  }
 
   // 将缓存数据转换为 Project 类型
   const convertCachedProjects = useCallback((cachedProjects: unknown[]): Project[] => {
@@ -91,7 +100,6 @@ export function ProjectListPage() {
       if (folders.length === 0) {
         // 没有配置扫描目录，显示空状态
         setAllProjects([])
-        setProjects([])
         return
       }
 
@@ -101,26 +109,17 @@ export function ProjectListPage() {
         console.log('从缓存加载项目列表')
         const cachedProjects = convertCachedProjects(cache.projects)
         setAllProjects(cachedProjects)
-        // 如果有选中的扫描目录，只显示该目录的项目
-        if (currentScanFolder) {
-          const filtered = cachedProjects.filter(p => p.scanFolder === currentScanFolder)
-          setProjects(filtered)
-        } else {
-          setProjects(cachedProjects)
-        }
       } else {
         // 没有缓存，显示空状态
         setAllProjects([])
-        setProjects([])
       }
     } catch (error) {
       console.error('Failed to load projects:', error)
       setAllProjects([])
-      setProjects([])
     } finally {
       setLoading(false)
     }
-  }, [convertCachedProjects, currentScanFolder])
+  }, [convertCachedProjects])
 
   // 加载项目列表
   useEffect(() => {
@@ -129,17 +128,9 @@ export function ProjectListPage() {
 
   // 监听扫描进度
   useEffect(() => {
-    const cleanup = window.electronAPI.onScanProgress((progress) => {
-      // 扫描期间前端完全控制进度，忽略主进程的目录扫描进度事件
-      // 这样可以确保进度条始终从前端设置的值开始，不会被主进程的事件覆盖
-      if (scanningRef.current) {
-        // 扫描中，忽略主进程事件
-        return
-      }
-      // 非扫描状态下才处理主进程事件（用于其他场景）
-      if (progress.stage !== 'complete') {
-        setScanProgress(progress)
-      }
+    const cleanup = window.electronAPI.onScanProgress(() => {
+      // 忽略主进程的所有进度事件，每个目录的扫描状态由前端独立维护
+      return
     })
     return cleanup
   }, [])
@@ -156,24 +147,6 @@ export function ProjectListPage() {
     }
   }, [loadProjects])
 
-  // 监听过滤事件
-  useEffect(() => {
-    const handleFilter = (event: Event) => {
-      const customEvent = event as CustomEvent<string>
-      const folder = customEvent.detail
-      // 过滤项目：只显示该目录下的项目
-      if (folder) {
-        const filtered = allProjects.filter(p => p.scanFolder === folder)
-        setProjects(filtered)
-      }
-    }
-
-    window.addEventListener('filter-projects-by-folder', handleFilter)
-    return () => {
-      window.removeEventListener('filter-projects-by-folder', handleFilter)
-    }
-  }, [allProjects])
-
   // 监听选中的扫描目录变化
   useEffect(() => {
     const handleSelectedFolder = (event: Event) => {
@@ -188,8 +161,8 @@ export function ProjectListPage() {
     }
   }, [])
 
-  // 排序项目
-  const sortedProjects = [...projects].sort((a, b) => {
+  // 排序项目（对当前目录的项目排序）
+  const sortedProjects = [...currentFolderProjects].sort((a, b) => {
     let comparison = 0
 
     switch (sortBy) {
@@ -233,7 +206,7 @@ export function ProjectListPage() {
   }
 
   const handleToggleFavorite = (project: Project) => {
-    setProjects(projects.map(p =>
+    setAllProjects(allProjects.map(p =>
       p.id === project.id ? { ...p, favorite: !p.favorite } : p
     ))
   }
@@ -244,7 +217,15 @@ export function ProjectListPage() {
 
   const confirmStopScan = () => {
     setShowStopConfirm(false)
-    scanCancelledRef.current = true
+    // 标记当前目录的扫描为已取消
+    setFolderScanStates(prev => {
+      const newStates = new Map(prev)
+      const currentState = newStates.get(currentScanFolder)
+      if (currentState) {
+        newStates.set(currentScanFolder, { ...currentState, cancelled: true })
+      }
+      return newStates
+    })
   }
 
   const cancelStopScan = () => {
@@ -265,33 +246,38 @@ export function ProjectListPage() {
       console.warn('没有选中的扫描目录')
       return
     }
-    // 如果正在扫描，显示停止确认对话框
-    if (scanning) {
+    // 如果当前目录正在扫描，显示停止确认对话框
+    if (currentScanState.scanning) {
       handleStopScan()
       return
     }
-    // 如果已有项目，显示重新扫描确认对话框
-    if (projects.length > 0) {
+    // 如果当前目录已有项目，显示重新扫描确认对话框
+    if (currentFolderProjects.length > 0) {
       setShowRescanConfirm(true)
       return
     }
-    // 否则直接开始扫描，先设置 ref 阻止主进程事件
-    scanningRef.current = true
+    // 否则直接开始扫描
     startScan()
   }
 
   const startScan = async () => {
-    console.log('开始扫描:', currentScanFolder)
-    // 开始扫描
-    scanCancelledRef.current = false
-    scanningRef.current = true // 立即设置 ref，阻止主进程事件更新进度
+    if (!currentScanFolder) return
 
-    // 先重置进度状态，避免显示旧的进度值
-    setScanProgress({ stage: 'starting', current: 0, total: 0, message: `准备扫描 ${currentScanFolder.split('/').pop()}...` })
+    console.log('开始扫描:', currentScanFolder)
+
+    // 初始化当前目录的扫描状态
+    setFolderScanStates(prev => {
+      const newStates = new Map(prev)
+      newStates.set(currentScanFolder, {
+        scanning: true,
+        progress: { stage: 'starting', current: 0, total: 0, message: `准备扫描 ${currentScanFolder.split('/').pop()}...` },
+        cancelled: false
+      })
+      return newStates
+    })
+    scanningRefs.current.set(currentScanFolder, true)
+
     setLoading(false)
-    setScanning(true)
-    // 清空项目列表，显示空项目页面和进度条
-    setProjects([])
 
     try {
       console.log('调用 window.electronAPI.scanProjects')
@@ -310,9 +296,17 @@ export function ProjectListPage() {
           console.log(`处理第 ${i + 1}/${scanResult.projects.length} 个项目: ${p.name}`)
 
           // 检查是否已取消
-          if (scanCancelledRef.current) {
+          const currentState = folderScanStates.get(currentScanFolder)
+          if (currentState?.cancelled) {
             console.log('扫描已取消')
-            setScanProgress({ stage: 'cancelled', current: projectsWithDetails.length, total: scanResult.projects.length, message: '扫描已取消' })
+            setFolderScanStates(prev => {
+              const newStates = new Map(prev)
+              newStates.set(currentScanFolder, {
+                ...newStates.get(currentScanFolder)!,
+                progress: { stage: 'cancelled', current: projectsWithDetails.length, total: scanResult.projects.length, message: '扫描已取消' }
+              })
+              return newStates
+            })
             break
           }
 
@@ -341,12 +335,19 @@ export function ProjectListPage() {
           projectsWithDetails.push(project)
           console.log(`  项目 ${p.name} 处理完成`)
 
-          // 更新进度
-          setScanProgress({
-            stage: 'processing',
-            current: projectsWithDetails.length,
-            total: scanResult.projects.length,
-            message: `正在处理: ${p.name}`
+          // 更新当前目录的进度
+          setFolderScanStates(prev => {
+            const newStates = new Map(prev)
+            newStates.set(currentScanFolder, {
+              ...newStates.get(currentScanFolder)!,
+              progress: {
+                stage: 'processing',
+                current: projectsWithDetails.length,
+                total: scanResult.projects.length,
+                message: `正在处理: ${p.name}`
+              }
+            })
+            return newStates
           })
         }
 
@@ -354,7 +355,6 @@ export function ProjectListPage() {
         const newAllProjects = allProjects.filter(p => p.scanFolder !== currentScanFolder)
         newAllProjects.push(...projectsWithDetails)
         setAllProjects(newAllProjects)
-        setProjects(projectsWithDetails)
         console.log(`扫描完成，找到 ${projectsWithDetails.length} 个项目`)
 
         // 保存到缓存（包括 scanFolder 信息）
@@ -384,18 +384,24 @@ export function ProjectListPage() {
           console.error('保存缓存失败:', error)
         }
       } else {
-        // 该目录没有项目，清空显示
+        // 该目录没有项目，清空该目录的项目
         const newAllProjects = allProjects.filter(p => p.scanFolder !== currentScanFolder)
         setAllProjects(newAllProjects)
-        setProjects([])
       }
     } catch (error) {
       console.error('Scan failed:', error)
     } finally {
-      console.log('扫描 finally，设置 scanning = false')
-      setScanning(false)
-      scanningRef.current = false // 恢复扫描状态，允许主进程事件更新进度
-      scanCancelledRef.current = false
+      console.log('扫描 finally，结束扫描状态')
+      // 结束当前目录的扫描状态
+      setFolderScanStates(prev => {
+        const newStates = new Map(prev)
+        const currentState = newStates.get(currentScanFolder)
+        if (currentState) {
+          newStates.set(currentScanFolder, { ...currentState, scanning: false })
+        }
+        return newStates
+      })
+      scanningRefs.current.delete(currentScanFolder)
     }
   }
 
@@ -446,7 +452,7 @@ export function ProjectListPage() {
             </DropdownMenu>
 
             {/* 重新扫描 - 只在有项目时显示 */}
-            {projects.length > 0 && (
+            {currentFolderProjects.length > 0 && (
               <Button
                 variant="outline"
                 size="sm"
@@ -465,7 +471,7 @@ export function ProjectListPage() {
         <div className="flex items-center justify-center flex-1">
           <div className="text-muted-foreground">加载中...</div>
         </div>
-      ) : projects.length === 0 ? (
+      ) : currentFolderProjects.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full text-center p-12">
           <h3 className="text-lg font-semibold mb-2">
             {currentScanFolder ? `${currentScanFolder.split('/').pop()} 没有找到项目` : '还没有项目'}
@@ -477,19 +483,19 @@ export function ProjectListPage() {
             }
           </p>
           {/* 进度条 */}
-          {scanning && (
+          {currentScanState.scanning && (
             <div className="flex flex-col gap-2 w-full max-w-md mb-4 animate-in fade-in duration-500">
               <div className="text-sm text-muted-foreground">
-                {scanProgress.message || '扫描中...'}
-                {scanProgress.total > 0 && (
-                  <span> ({scanProgress.current}/{scanProgress.total})</span>
+                {currentScanState.progress.message || '扫描中...'}
+                {currentScanState.progress.total > 0 && (
+                  <span> ({currentScanState.progress.current}/{currentScanState.progress.total})</span>
                 )}
               </div>
               <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
-                {scanProgress.stage === 'processing' && scanProgress.total > 0 ? (
+                {currentScanState.progress.stage === 'processing' && currentScanState.progress.total > 0 ? (
                   <div
                     className="bg-primary h-full transition-all duration-300 ease-out"
-                    style={{ width: `${Math.round((scanProgress.current / scanProgress.total) * 100)}%` }}
+                    style={{ width: `${Math.round((currentScanState.progress.current / currentScanState.progress.total) * 100)}%` }}
                   />
                 ) : (
                   <div className="bg-primary h-full" style={{ width: '0%' }} />
@@ -501,9 +507,9 @@ export function ProjectListPage() {
             <Button
               size="sm"
               onClick={handleScanAll}
-              variant={scanning ? "destructive" : "default"}
+              variant={currentScanState.scanning ? "destructive" : "default"}
             >
-              {scanning ? (
+              {currentScanState.scanning ? (
                 <>
                   <RefreshCwIcon className="h-4 w-4 mr-2 animate-spin" />
                   停止扫描
@@ -533,7 +539,7 @@ export function ProjectListPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>确认停止扫描？</AlertDialogTitle>
             <AlertDialogDescription>
-              当前已扫描 {scanProgress.current} 个项目，停止后将保留这些已扫描的项目，未扫描的项目将被忽略。
+              当前已扫描 {currentScanState.progress.current} 个项目，停止后将保留这些已扫描的项目，未扫描的项目将被忽略。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
