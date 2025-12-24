@@ -46,6 +46,18 @@ export function App() {
     )
   }, [loadProjects, setInitialProjects, setScannedDirs])
 
+  // 如果有扫描目录但当前没有选中路径，自动选中第一个
+  useEffect(() => {
+    if (!selectedPath && folderScannedDirs.size > 0) {
+      const firstFolder = Array.from(folderScannedDirs.keys())[0]
+      if (firstFolder) {
+        setSelectedPath(firstFolder)
+      }
+    }
+  // 依赖 folderScannedDirs 的引用，当它变化时触发
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [folderScannedDirs])
+
   // 处理路径选择
   const handlePathSelect = useCallback((path: string) => {
     setSelectedPath(path)
