@@ -282,11 +282,13 @@ export function ProjectListPage() {
     // 开始扫描
     scanCancelledRef.current = false
     scanningRef.current = true // 立即设置 ref，阻止主进程事件更新进度
+
+    // 先重置进度状态，避免显示旧的进度值
+    setScanProgress({ stage: 'starting', current: 0, total: 0, message: `准备扫描 ${currentScanFolder.split('/').pop()}...` })
     setLoading(false)
     setScanning(true)
     // 清空项目列表，显示空项目页面和进度条
     setProjects([])
-    setScanProgress({ stage: 'starting', current: 0, total: 0, message: `准备扫描 ${currentScanFolder.split('/').pop()}...` })
 
     try {
       console.log('调用 window.electronAPI.scanProjects')
@@ -481,7 +483,7 @@ export function ProjectListPage() {
                 )}
               </div>
               <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
-                {scanProgress.total > 0 ? (
+                {scanProgress.total > 0 && scanProgress.stage === 'processing' ? (
                   <div
                     className="bg-primary h-full transition-all duration-300 ease-out"
                     style={{ width: `${Math.round((scanProgress.current / scanProgress.total) * 100)}%` }}
