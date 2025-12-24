@@ -45,6 +45,9 @@ export function useFolderScanning() {
     })
     scanningRefs.current.set(folder, true)
 
+    // 清空该目录的项目列表，显示空状态页面（包括进度条）
+    setAllProjects(prev => prev.filter(p => p.scanFolder !== folder))
+
     try {
       console.log('调用 window.electronAPI.scanProjects')
       const scanResult = await window.electronAPI.scanProjects([folder])
@@ -130,10 +133,18 @@ export function useFolderScanning() {
         try {
           const foldersResult = await window.electronAPI.getScanFolders()
           const folders = foldersResult.folders || []
-          const serializedProjects = allProjects
-            .filter(p => p.scanFolder !== folder)
-            .concat(projectsWithDetails)
-            .map(p => ({
+
+          // 使用函数式更新获取最新的项目列表
+          const serializedProjects = await new Promise<Project[]>((resolve) => {
+            setAllProjects(prev => {
+              const result = prev.filter(p => p.scanFolder !== folder).concat(projectsWithDetails)
+              resolve(result)
+              return result
+            })
+          })
+
+          await window.electronAPI.saveProjectsCache(
+            serializedProjects.map(p => ({
               name: p.name,
               path: p.path,
               scanFolder: p.scanFolder,
@@ -147,8 +158,9 @@ export function useFolderScanning() {
               gitChanges: p.gitChanges,
               packageManager: p.packageManager,
               favorite: p.favorite,
-            }))
-          await window.electronAPI.saveProjectsCache(serializedProjects, folders)
+            })),
+            folders
+          )
           console.log('项目列表已保存到缓存')
         } catch (error) {
           console.error('保存缓存失败:', error)
@@ -172,7 +184,7 @@ export function useFolderScanning() {
       })
       scanningRefs.current.delete(folder)
     }
-  }, [folderScanStates, allProjects])
+  }, [folderScanStates])
 
   // 停止扫描
   const stopScan = useCallback((folder: string) => {
