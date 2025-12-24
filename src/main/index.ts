@@ -435,8 +435,8 @@ ipcMain.handle('remove-scan-folder', async (_, folder: string) => {
 })
 
 // 保存项目缓存（由前端调用）
-ipcMain.handle('save-projects-cache', async (_, projects: unknown[], folders: string[]) => {
-  return saveProjectsCache(projects, folders)
+ipcMain.handle('save-projects-cache', async (_, projects: unknown[], folders: string[], scannedDirs?: string[]) => {
+  return saveProjectsCache(projects, folders, scannedDirs)
 })
 
 // 获取项目统计信息

@@ -44,7 +44,9 @@ export function NavScan({ scannedDirs, projectPaths, onPathSelect }: NavScanProp
   const folderTreesData = useMemo(() => {
     const result: ScanFolderTree[] = []
     for (const folder of scanFolders) {
-      const tree = buildTree(scannedDirs, folder, projectPaths)
+      // 如果没有 scannedDirs，使用 projectPaths 中的父目录来构建
+      const dirsToUse = scannedDirs.length > 0 ? scannedDirs : projectPaths
+      const tree = buildTree(dirsToUse, folder, projectPaths)
       const existing = folderTrees.get(folder)
       result.push({
         folder,

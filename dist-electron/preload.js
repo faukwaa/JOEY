@@ -21,7 +21,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   addScanFolder: (folder) => ipcRenderer.invoke("add-scan-folder", folder),
   removeScanFolder: (folder) => ipcRenderer.invoke("remove-scan-folder", folder),
   getProjectStats: (projectPath) => ipcRenderer.invoke("get-project-stats", projectPath),
-  saveProjectsCache: (projects, folders) => ipcRenderer.invoke("save-projects-cache", projects, folders),
+  saveProjectsCache: (projects, folders, scannedDirs) => ipcRenderer.invoke("save-projects-cache", projects, folders, scannedDirs),
   // 扫描进度监听
   onScanProgress: (callback) => {
     const handler = (_, progress) => {
