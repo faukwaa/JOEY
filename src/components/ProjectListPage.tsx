@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import type { Project } from '@/types'
-import { ProjectGrid } from '@/components/ProjectCard'
+import { ProjectList } from '@/components/ProjectList'
 import { ProjectControls } from '@/components/ProjectControls'
 import { EmptyProjectState } from '@/components/EmptyProjectState'
 import { ScanConfirmDialogs } from '@/components/ScanConfirmDialogs'
@@ -181,7 +181,7 @@ export function ProjectListPage({
           onScan={handleScanAll}
         />
       ) : (
-        <ProjectGrid
+        <ProjectList
           projects={sortedProjects}
           onOpen={handleOpenProject}
           onRefresh={handleRefreshProject}
