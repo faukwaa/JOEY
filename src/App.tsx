@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback, useEffect, useMemo } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import {
   Breadcrumb,
@@ -89,11 +89,22 @@ export function App() {
   // 获取当前扫描目录（用于扫描操作）
   const currentScanFolderForOps = scanFolder || selectedPath
 
+  // 使用 useMemo 缓存传递给 sidebar 的数据，避免不必要的重新渲染
+  const currentScannedDirs = useMemo(
+    () => getScannedDirs(currentScanFolderForOps),
+    [getScannedDirs, currentScanFolderForOps]
+  )
+
+  const allProjectPaths = useMemo(
+    () => allProjects.map(p => p.path),
+    [allProjects]
+  )
+
   return (
     <SidebarProvider>
       <AppSidebar
-        scannedDirs={getScannedDirs(currentScanFolderForOps)}
-        projectPaths={allProjects.map(p => p.path)}
+        scannedDirs={currentScannedDirs}
+        projectPaths={allProjectPaths}
         onPathSelect={handlePathSelect}
       />
       <SidebarInset>
