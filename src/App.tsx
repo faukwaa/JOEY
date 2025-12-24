@@ -62,8 +62,12 @@ export function App() {
       selectedPath === folder || selectedPath.startsWith(folder + "/")
     )
 
+    // 提取显示名称
+    const folderName = selectedPath.split("/").pop() || selectedPath
+
+    // 如果没有找到扫描根目录（还未扫描过），返回空项目列表
     if (!scanFolder) {
-      return { projects: [], folderName: "", scanFolder: "" }
+      return { projects: [], folderName, scanFolder: selectedPath }
     }
 
     // 获取该扫描根目录下的所有项目
@@ -76,8 +80,6 @@ export function App() {
       }
       return p.path.startsWith(selectedPath + "/")
     })
-
-    const folderName = selectedPath.split("/").pop() || selectedPath
 
     return { projects: filteredProjects, folderName, scanFolder }
   }, [selectedPath, folderScannedDirs, allProjects])
