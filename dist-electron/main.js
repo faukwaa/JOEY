@@ -301,6 +301,9 @@ ipcMain.handle("remove-scan-folder", async (_, folder) => {
   const newFolders = folders.filter((f) => f !== folder);
   return saveScanFolders(newFolders);
 });
+ipcMain.handle("save-projects-cache", async (_, projects, folders) => {
+  return saveProjectsCache(projects, folders);
+});
 ipcMain.handle("get-project-stats", async (_, projectPath) => {
   try {
     let size = 0;
