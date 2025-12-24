@@ -49,6 +49,7 @@ export function ProjectListPage() {
       const project = p as {
         path: string
         name: string
+        scanFolder?: string
         createdAt?: string
         updatedAt?: string
         addedAt?: string
@@ -64,15 +65,16 @@ export function ProjectListPage() {
         id: encodeURIComponent(project.path),
         name: project.name,
         path: project.path,
+        scanFolder: project.scanFolder,
         createdAt: project.createdAt ? new Date(project.createdAt) : new Date(),
         updatedAt: project.updatedAt ? new Date(project.updatedAt) : new Date(),
         addedAt: project.addedAt ? new Date(project.addedAt) : new Date(),
         size: project.size || 0,
         hasNodeModules: project.hasNodeModules || false,
         gitBranch: project.gitBranch,
-        gitStatus: project.gitStatus,
+        gitStatus: project.gitStatus as 'clean' | 'modified' | 'error' | 'no-git' | undefined,
         gitChanges: project.gitChanges,
-        packageManager: project.packageManager,
+        packageManager: project.packageManager as 'npm' | 'yarn' | 'pnpm' | 'bun' | undefined,
         favorite: project.favorite || false,
       }
     })
