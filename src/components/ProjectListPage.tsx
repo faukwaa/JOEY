@@ -273,7 +273,8 @@ export function ProjectListPage() {
       setShowRescanConfirm(true)
       return
     }
-    // 否则直接开始扫描
+    // 否则直接开始扫描，先设置 ref 阻止主进程事件
+    scanningRef.current = true
     startScan()
   }
 
@@ -483,7 +484,7 @@ export function ProjectListPage() {
                 )}
               </div>
               <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
-                {scanProgress.total > 0 && scanProgress.stage === 'processing' ? (
+                {scanProgress.stage === 'processing' ? (
                   <div
                     className="bg-primary h-full transition-all duration-300 ease-out"
                     style={{ width: `${Math.round((scanProgress.current / scanProgress.total) * 100)}%` }}
