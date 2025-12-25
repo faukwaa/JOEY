@@ -38,6 +38,8 @@
     --sidebar-accent-foreground: oklch(0.21 0.034 264.665);
     --sidebar-border: oklch(0.928 0.006 264.531);
     --sidebar-ring: oklch(0.707 0.022 261.325);
+    --scrollbar-thumb: oklch(0.7 0.02 264.542);
+    --scrollbar-thumb-hover: oklch(0.5 0.025 264.542);
 }
 
 .dark {
@@ -72,6 +74,8 @@
     --sidebar-accent-foreground: oklch(0.985 0.002 247.839);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.551 0.027 264.364);
+    --scrollbar-thumb: oklch(0.3 0.015 264.542);
+    --scrollbar-thumb-hover: oklch(0.4 0.02 264.542);
 }
 
 @theme inline {
@@ -129,4 +133,32 @@
   button, a, [role="button"], [role="link"], input[type="button"], input[type="submit"] {
     @apply cursor-pointer;
     }
+}
+
+/* 滚动条样式 */
+@layer base {
+  /* Webkit 浏览器 (Chrome, Safari, Edge) */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+  }
+
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+  }
 }
