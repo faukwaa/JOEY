@@ -8,7 +8,6 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { FolderOpenIcon } from "lucide-react"
 import type { Project } from "@/types"
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
@@ -24,11 +23,13 @@ export function AppSidebar({ scannedDirs, projectPaths, allProjects, onPathSelec
 
   return (
     <Sidebar collapsible="none" {...props}>
-      <SidebarHeader className={isMacOS ? "pt-4" : ""}>
-        <div className="flex items-center justify-between px-2 py-2">
+      <SidebarHeader className={isMacOS ? "pt-6" : "pt-2"}>
+        <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
-            <FolderOpenIcon className="h-6 w-6" />
-            <span className="text-lg font-semibold">项目管理</span>
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold text-sm shadow-sm">
+              J
+            </div>
+            <span className="text-lg font-semibold">Joey</span>
           </div>
           <ThemeToggle />
         </div>
