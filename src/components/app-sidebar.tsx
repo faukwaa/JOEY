@@ -10,6 +10,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import type { Project } from "@/types"
+import joeyLogo from "/joey-logo.png"
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   scannedDirs: string[]
@@ -28,7 +29,7 @@ export function AppSidebar({ scannedDirs, projectPaths, allProjects, onPathSelec
         <div className="flex items-center justify-between px-4 py-1">
           <div className="flex items-center gap-3">
             <img
-              src="/joey-logo.png"
+              src={joeyLogo}
               alt="Joey Logo"
               className="w-20 h-20 rounded-lg object-cover shadow-sm"
             />

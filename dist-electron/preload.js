@@ -1,50 +1,47 @@
-import { contextBridge, ipcRenderer } from "electron";
-contextBridge.exposeInMainWorld("electronAPI", {
-  sendMessage: (channel, data) => {
-    ipcRenderer.send(channel, data);
+import { contextBridge as c, ipcRenderer as o } from "electron";
+c.exposeInMainWorld("electronAPI", {
+  sendMessage: (e, n) => {
+    o.send(e, n);
   },
-  on: (channel, callback) => {
-    ipcRenderer.on(channel, (_, ...args) => callback(...args));
+  on: (e, n) => {
+    o.on(e, (i, ...r) => n(...r));
   },
-  invoke: (channel, ...args) => {
-    return ipcRenderer.invoke(channel, ...args);
-  },
+  invoke: (e, ...n) => o.invoke(e, ...n),
   // Project scanning APIs
-  scanProjects: (folders) => ipcRenderer.invoke("scan-projects", folders),
-  getProjectsCache: () => ipcRenderer.invoke("get-projects-cache"),
-  getGitInfo: (projectPath) => ipcRenderer.invoke("get-git-info", projectPath),
-  openProjectFolder: (projectPath) => ipcRenderer.invoke("open-project-folder", projectPath),
-  openProjectTerminal: (projectPath) => ipcRenderer.invoke("open-project-terminal", projectPath),
-  openProjectVSCode: (projectPath) => ipcRenderer.invoke("open-project-vscode", projectPath),
-  openProjectQoder: (projectPath) => ipcRenderer.invoke("open-project-qoder", projectPath),
-  selectFolders: () => ipcRenderer.invoke("select-folders"),
+  scanProjects: (e) => o.invoke("scan-projects", e),
+  getProjectsCache: () => o.invoke("get-projects-cache"),
+  getGitInfo: (e) => o.invoke("get-git-info", e),
+  openProjectFolder: (e) => o.invoke("open-project-folder", e),
+  openProjectTerminal: (e) => o.invoke("open-project-terminal", e),
+  openProjectVSCode: (e) => o.invoke("open-project-vscode", e),
+  openProjectQoder: (e) => o.invoke("open-project-qoder", e),
+  selectFolders: () => o.invoke("select-folders"),
   // Scan folders management APIs
-  saveScanFolders: (folders) => ipcRenderer.invoke("save-scan-folders", folders),
-  getScanFolders: () => ipcRenderer.invoke("get-scan-folders"),
-  addScanFolder: (folder) => ipcRenderer.invoke("add-scan-folder", folder),
-  removeScanFolder: (folder) => ipcRenderer.invoke("remove-scan-folder", folder),
-  getProjectStats: (projectPath) => ipcRenderer.invoke("get-project-stats", projectPath),
+  saveScanFolders: (e) => o.invoke("save-scan-folders", e),
+  getScanFolders: () => o.invoke("get-scan-folders"),
+  addScanFolder: (e) => o.invoke("add-scan-folder", e),
+  removeScanFolder: (e) => o.invoke("remove-scan-folder", e),
+  getProjectStats: (e) => o.invoke("get-project-stats", e),
   // User settings APIs
-  getUserSettings: () => ipcRenderer.invoke("get-user-settings"),
-  saveUserSettings: (settings) => ipcRenderer.invoke("save-user-settings", settings),
-  saveProjectsCache: (projects, folders, scannedDirs, folder, favorites, scannedDirsMap) => ipcRenderer.invoke("save-projects-cache", projects, folders, scannedDirs, folder, favorites, scannedDirsMap),
+  getUserSettings: () => o.invoke("get-user-settings"),
+  saveUserSettings: (e) => o.invoke("save-user-settings", e),
+  saveProjectsCache: (e, n, i, r, s, t) => o.invoke("save-projects-cache", e, n, i, r, s, t),
   // 项目操作 APIs
-  deleteNodeModules: (projectPath) => ipcRenderer.invoke("delete-node-modules", projectPath),
-  deleteProjectFromDisk: (projectPath) => ipcRenderer.invoke("delete-project-from-disk", projectPath),
-  refreshProjectInfo: (projectPath) => ipcRenderer.invoke("refresh-project-info", projectPath),
+  deleteNodeModules: (e) => o.invoke("delete-node-modules", e),
+  deleteProjectFromDisk: (e) => o.invoke("delete-project-from-disk", e),
+  refreshProjectInfo: (e) => o.invoke("refresh-project-info", e),
   // 窗口控制 APIs
-  windowMinimize: () => ipcRenderer.invoke("window-minimize"),
-  windowMaximize: () => ipcRenderer.invoke("window-maximize"),
-  windowClose: () => ipcRenderer.invoke("window-close"),
-  windowIsMaximized: () => ipcRenderer.invoke("window-is-maximized"),
+  windowMinimize: () => o.invoke("window-minimize"),
+  windowMaximize: () => o.invoke("window-maximize"),
+  windowClose: () => o.invoke("window-close"),
+  windowIsMaximized: () => o.invoke("window-is-maximized"),
   // 扫描进度监听
-  onScanProgress: (callback) => {
-    const handler = (_, progress) => {
-      callback(progress);
+  onScanProgress: (e) => {
+    const n = (i, r) => {
+      e(r);
     };
-    ipcRenderer.on("scan-progress", handler);
-    return () => {
-      ipcRenderer.removeListener("scan-progress", handler);
+    return o.on("scan-progress", n), () => {
+      o.removeListener("scan-progress", n);
     };
   }
 });
