@@ -45,7 +45,7 @@ export function ProjectListPage({
   const [sortBy, setSortBy] = useState<'name' | 'createdAt' | 'updatedAt' | 'size'>('updatedAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
-  const { handleOpenProject, handleOpenTerminal, handleOpenVSCode, handleOpenQoder, handleRefreshProject, handleDeleteProject, handleDeleteProjectFromDisk, handleDeleteNodeModules, handleToggleFavorite } = useProjectActions()
+  const { handleOpenProject, handleOpenTerminal, handleOpenVSCode, handleOpenQoder, handleRefreshProject, handleDeleteProject, handleDeleteProjectFromDisk, handleDeleteNodeModules } = useProjectActions()
 
   const currentScanState = getCurrentScanState(currentScanFolder)
 
@@ -138,14 +138,17 @@ export function ProjectListPage({
 
   // 处理项目操作
   const handleToggleFavoriteWrapper = useCallback(async (project: Project) => {
-    handleToggleFavorite(project, (proj) => {
-      setAllProjects(allProjects.map(p =>
-        p.id === proj.id ? { ...p, favorite: !p.favorite } : p
-      ))
-    })
-    // 保存收藏状态到缓存
-    await saveFavorites()
-  }, [allProjects, handleToggleFavorite, setAllProjects, saveFavorites])
+    // 先计算更新后的项目列表
+    const updatedProjects = allProjects.map(p =>
+      p.id === project.id ? { ...p, favorite: !p.favorite } : p
+    )
+
+    // 更新状态
+    setAllProjects(updatedProjects)
+
+    // 保存收藏状态到缓存（直接传递更新后的项目列表）
+    await saveFavorites(updatedProjects)
+  }, [allProjects, setAllProjects, saveFavorites])
 
   // 处理停止扫描
   const handleStopScan = () => {

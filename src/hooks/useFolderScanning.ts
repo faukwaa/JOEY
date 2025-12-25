@@ -234,13 +234,14 @@ export function useFolderScanning() {
   }, [])
 
   // 保存收藏状态到缓存
-  const saveFavorites = useCallback(async () => {
+  const saveFavorites = useCallback(async (projectsToSave?: Project[]) => {
     try {
+      const projects = projectsToSave || allProjects
       const foldersResult = await window.electronAPI.getScanFolders()
       const folders = foldersResult.folders || []
 
       // 序列化项目
-      const serializedProjects = allProjects.map(p => ({
+      const serializedProjects = projects.map(p => ({
         name: p.name,
         path: p.path,
         scanFolder: p.scanFolder,
@@ -257,7 +258,7 @@ export function useFolderScanning() {
       }))
 
       // 提取收藏的项目 ID
-      const favorites = allProjects.filter(p => p.favorite).map(p => p.id)
+      const favorites = projects.filter(p => p.favorite).map(p => p.id)
 
       // 将 folderScannedDirs 转换为对象格式
       const scannedDirsMap: Record<string, string[]> = {}
@@ -273,7 +274,7 @@ export function useFolderScanning() {
         favorites,
         scannedDirsMap
       )
-      console.log('收藏状态已保存')
+      console.log('收藏状态已保存，收藏项目:', favorites)
     } catch (error) {
       console.error('保存收藏失败:', error)
     }
