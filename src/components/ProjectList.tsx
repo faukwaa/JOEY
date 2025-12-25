@@ -18,6 +18,7 @@ import {
   StarOffIcon,
   GitBranchIcon,
 } from 'lucide-react'
+import { Icon } from '@iconify/react'
 import { formatSize, formatDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
@@ -31,29 +32,38 @@ interface ProjectListProps {
 
 // 项目类型检测和图标配置
 const projectTypeConfigs = [
-  { name: 'vue', patterns: [/vue/i], icon: '🟢', color: 'text-green-600' },
-  { name: 'react', patterns: [/react/i], icon: '⚛️', color: 'text-cyan-600' },
-  { name: 'angular', patterns: [/angular/i], icon: '🅰️', color: 'text-red-600' },
-  { name: 'nextjs', patterns: [/next/i], icon: '▲', color: 'text-gray-900 dark:text-gray-100' },
-  { name: 'nuxt', patterns: [/nuxt/i], icon: '🟢', color: 'text-green-600' },
-  { name: 'nodejs', patterns: [/node/i], icon: '💚', color: 'text-green-600' },
-  { name: 'typescript', patterns: [/typescript?/i], icon: '🔷', color: 'text-blue-600' },
-  { name: 'java', patterns: [/java|pom\.xml|build\.gradle/i], icon: '☕', color: 'text-orange-600' },
-  { name: 'python', patterns: [/python|requirements\.txt|pyproject\.toml/i], icon: '🐍', color: 'text-yellow-600' },
-  { name: 'go', patterns: [/go\.mod/i], icon: '🐹', color: 'text-cyan-600' },
-  { name: 'rust', patterns: [/cargo\.toml|rust/i], icon: '🦀', color: 'text-orange-700' },
-  { name: 'ruby', patterns: [/ruby|gemfile/i], icon: '💎', color: 'text-red-600' },
-  { name: 'php', patterns: [/php|composer/i], icon: '🐘', color: 'text-indigo-600' },
-  { name: 'swift', patterns: [/swift/i], icon: '🍎', color: 'text-orange-600' },
-  { name: 'kotlin', patterns: [/kotlin/i], icon: '🎯', color: 'text-purple-600' },
-  { name: 'flutter', patterns: [/flutter/i], icon: '🦋', color: 'text-cyan-500' },
-  { name: 'dart', patterns: [/dart/i], icon: '🎯', color: 'text-blue-600' },
-  { name: 'electron', patterns: [/electron/i], icon: '⚡', color: 'text-blue-600' },
-  { name: 'default', patterns: [/.*/], icon: '📁', color: 'text-gray-600' },
+  { name: 'vue', patterns: [/vue/i], icon: 'logos:vue' },
+  { name: 'react', patterns: [/react/i], icon: 'logos:react' },
+  { name: 'angular', patterns: [/angular/i], icon: 'logos:angular-icon' },
+  { name: 'nextjs', patterns: [/next\.?js/i], icon: 'logos:nextjs-icon' },
+  { name: 'nuxt', patterns: [/nuxt/i], icon: 'logos:nuxt-icon' },
+  { name: 'nodejs', patterns: [/node/i], icon: 'logos:nodejs-icon' },
+  { name: 'typescript', patterns: [/typescript?/i], icon: 'logos:typescript-icon' },
+  { name: 'javascript', patterns: [/javascript|js/i], icon: 'logos:javascript' },
+  { name: 'java', patterns: [/java|pom\.xml|build\.gradle/i], icon: 'logos:openjdk' },
+  { name: 'python', patterns: [/python|requirements\.txt|pyproject\.toml/i], icon: 'logos:python' },
+  { name: 'go', patterns: [/go\.mod/i], icon: 'logos:go' },
+  { name: 'rust', patterns: [/cargo\.toml|rust/i], icon: 'logos:rust' },
+  { name: 'ruby', patterns: [/ruby|gemfile/i], icon: 'logos:ruby' },
+  { name: 'php', patterns: [/php|composer/i], icon: 'logos:php' },
+  { name: 'swift', patterns: [/swift/i], icon: 'logos:swift' },
+  { name: 'kotlin', patterns: [/kotlin/i], icon: 'logos:kotlin' },
+  { name: 'flutter', patterns: [/flutter/i], icon: 'logos:flutter' },
+  { name: 'dart', patterns: [/dart/i], icon: 'logos:dart' },
+  { name: 'electron', patterns: [/electron/i], icon: 'logos:electron' },
+  { name: 'vite', patterns: [/vite/i], icon: 'logos:vitejs' },
+  { name: 'webpack', patterns: [/webpack/i], icon: 'logos:webpack' },
+  { name: 'nestjs', patterns: [/nest/i], icon: 'logos:nestjs' },
+  { name: 'svelte', patterns: [/svelte/i], icon: 'logos:svelte-icon' },
+  { name: 'docker', patterns: [/docker/i], icon: 'logos:docker-icon' },
+  { name: 'linux', patterns: [/linux/i], icon: 'logos:linux-tux' },
+  { name: 'android', patterns: [/android/i], icon: 'logos:android-icon' },
+  { name: 'apple', patterns: [/ios|macos|apple/i], icon: 'logos:apple' },
+  { name: 'default', patterns: [/.*/], icon: 'logos:file-icon' },
 ]
 
 // 检测项目类型
-function detectProjectType(project: Project): { icon: string; color: string } {
+function detectProjectType(project: Project): string {
   const pathLower = project.path.toLowerCase()
   const nameLower = project.name.toLowerCase()
 
@@ -61,12 +71,12 @@ function detectProjectType(project: Project): { icon: string; color: string } {
     if (config.name === 'default') continue
     for (const pattern of config.patterns) {
       if (pattern.test(pathLower) || pattern.test(nameLower)) {
-        return { icon: config.icon, color: config.color }
+        return config.icon
       }
     }
   }
 
-  return { icon: '📁', color: 'text-gray-600' }
+  return 'logos:file-icon'
 }
 
 export function ProjectListItem({
@@ -82,7 +92,7 @@ export function ProjectListItem({
   onDelete?: (project: Project) => void
   onToggleFavorite?: (project: Project) => void
 }) {
-  const { icon, color } = detectProjectType(project)
+  const icon = detectProjectType(project)
 
   return (
     <div
@@ -94,7 +104,9 @@ export function ProjectListItem({
       <div className="flex items-center gap-4">
         {/* 图标和名称 */}
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <span className={cn("text-xl flex-shrink-0", color)}>{icon}</span>
+          <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
+            <Icon icon={icon} className="w-7 h-7" />
+          </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
               <h3 className="text-sm font-semibold truncate">{project.name}</h3>
