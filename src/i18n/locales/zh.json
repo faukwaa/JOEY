@@ -18,7 +18,7 @@
     "noProjectsFound": "{{name}} 没有找到项目",
     "noProjectsYet": "还没有项目",
     "selectFolder": "在左侧选择一个扫描目录",
-    "scanInstruction": "点击"立即扫描"按钮扫描当前选中的目录",
+    "scanInstruction": "点击「立即扫描」按钮扫描当前选中的目录",
     "scanningProgress": "正在搜索项目，请稍候...",
     "confirmStop": "确认停止扫描？",
     "confirmStopDesc": "当前已扫描 {{count}} 个项目，停止后将保留这些已扫描的项目，未扫描的项目将被忽略。",
@@ -46,7 +46,7 @@
     "deleteNodeModulesConfirm": "确定要删除 node_modules 吗？这将释放磁盘空间。",
     "emptyState": {
       "title": "还没有项目",
-      "description": "点击左侧的"添加扫描目录"按钮，选择要监控的项目文件夹。"
+      "description": "点击左侧的「添加扫描目录」按钮，选择要监控的项目文件夹。"
     }
   },
   "user": {
