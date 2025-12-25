@@ -24,6 +24,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   saveProjectsCache: (projects, folders, scannedDirs, folder) => ipcRenderer.invoke("save-projects-cache", projects, folders, scannedDirs, folder),
   // 项目操作 APIs
   deleteNodeModules: (projectPath) => ipcRenderer.invoke("delete-node-modules", projectPath),
+  deleteProjectFromDisk: (projectPath) => ipcRenderer.invoke("delete-project-from-disk", projectPath),
   refreshProjectInfo: (projectPath) => ipcRenderer.invoke("refresh-project-info", projectPath),
   // 扫描进度监听
   onScanProgress: (callback) => {

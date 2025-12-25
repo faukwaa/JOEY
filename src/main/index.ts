@@ -598,6 +598,25 @@ ipcMain.handle('delete-node-modules', async (_, projectPath: string) => {
   }
 })
 
+// 从磁盘删除项目
+ipcMain.handle('delete-project-from-disk', async (_, projectPath: string) => {
+  try {
+    // 检查项目路径是否存在
+    if (!existsSync(projectPath)) {
+      return { success: false, error: '项目目录不存在' }
+    }
+
+    // 删除项目目录
+    const rmAsync = promisify(rm)
+    await rmAsync(projectPath, { recursive: true, force: true })
+
+    return { success: true }
+  } catch (error) {
+    console.error('Error deleting project from disk:', error)
+    return { success: false, error: String(error) }
+  }
+})
+
 // 刷新项目信息（重新获取项目统计信息）
 ipcMain.handle('refresh-project-info', async (_, projectPath: string) => {
   try {

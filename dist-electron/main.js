@@ -425,6 +425,19 @@ ipcMain.handle("delete-node-modules", async (_, projectPath) => {
     return { success: false, error: String(error) };
   }
 });
+ipcMain.handle("delete-project-from-disk", async (_, projectPath) => {
+  try {
+    if (!existsSync(projectPath)) {
+      return { success: false, error: "项目目录不存在" };
+    }
+    const rmAsync = promisify(rm);
+    await rmAsync(projectPath, { recursive: true, force: true });
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting project from disk:", error);
+    return { success: false, error: String(error) };
+  }
+});
 ipcMain.handle("refresh-project-info", async (_, projectPath) => {
   try {
     let gitBranch = null;

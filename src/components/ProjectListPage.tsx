@@ -40,7 +40,7 @@ export function ProjectListPage({
   const [sortBy, setSortBy] = useState<'name' | 'createdAt' | 'updatedAt' | 'size'>('updatedAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
-  const { handleOpenProject, handleRefreshProject, handleDeleteProject, handleDeleteNodeModules, handleToggleFavorite } = useProjectActions()
+  const { handleOpenProject, handleRefreshProject, handleDeleteProject, handleDeleteProjectFromDisk, handleDeleteNodeModules, handleToggleFavorite } = useProjectActions()
 
   const currentScanState = getCurrentScanState(currentScanFolder)
 
@@ -64,6 +64,25 @@ export function ProjectListPage({
       console.error('Failed to delete node_modules:', result.error)
     }
   }, [handleDeleteNodeModules, allProjects, setAllProjects])
+
+  // 处理从磁盘删除项目
+  const handleDeleteFromDiskAndUpdate = useCallback(async (project: Project) => {
+    const result = await handleDeleteProjectFromDisk(project)
+    if (result.success) {
+      // 从项目列表中移除
+      setAllProjects(allProjects.filter(p => p.id !== project.id))
+    } else {
+      console.error('Failed to delete project from disk:', result.error)
+    }
+    return result
+  }, [handleDeleteProjectFromDisk, allProjects, setAllProjects])
+
+  // 处理从列表中删除项目
+  const handleDeleteFromListAndUpdate = useCallback((project: Project) => {
+    handleDeleteProject(project)
+    // 从项目列表中移除
+    setAllProjects(allProjects.filter(p => p.id !== project.id))
+  }, [handleDeleteProject, allProjects, setAllProjects])
 
   // 排序项目
   const sortedProjects = [...currentFolderProjects].sort((a, b) => {
@@ -206,7 +225,8 @@ export function ProjectListPage({
           projects={sortedProjects}
           onOpen={handleOpenProject}
           onRefresh={handleRefreshAndUpdate}
-          onDelete={handleDeleteProject}
+          onDelete={handleDeleteFromListAndUpdate}
+          onDeleteFromDisk={handleDeleteFromDiskAndUpdate}
           onToggleFavorite={handleToggleFavoriteWrapper}
           onDeleteNodeModules={handleDeleteNodeModulesAndUpdate}
         />

@@ -30,6 +30,7 @@ interface ProjectListProps {
   onOpen?: (project: Project) => void
   onRefresh?: (project: Project) => void
   onDelete?: (project: Project) => void
+  onDeleteFromDisk?: (project: Project) => void
   onToggleFavorite?: (project: Project) => void
   onDeleteNodeModules?: (project: Project) => void
 }
@@ -88,6 +89,7 @@ export function ProjectListItem({
   onOpen,
   onRefresh,
   onDelete,
+  onDeleteFromDisk,
   onToggleFavorite,
   onDeleteNodeModules,
 }: {
@@ -95,11 +97,13 @@ export function ProjectListItem({
   onOpen?: (project: Project) => void
   onRefresh?: (project: Project) => void
   onDelete?: (project: Project) => void
+  onDeleteFromDisk?: (project: Project) => void
   onToggleFavorite?: (project: Project) => void
   onDeleteNodeModules?: (project: Project) => void
 }) {
   const icon = detectProjectType(project)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showDeleteFromListConfirm, setShowDeleteFromListConfirm] = useState(false)
+  const [showDeleteFromDiskConfirm, setShowDeleteFromDiskConfirm] = useState(false)
   const [showDeleteNodeModulesConfirm, setShowDeleteNodeModulesConfirm] = useState(false)
 
   return (
@@ -222,11 +226,18 @@ export function ProjectListItem({
                 </>
               )}
               <DropdownMenuItem
-                onClick={() => setShowDeleteConfirm(true)}
-                className="text-destructive focus:text-destructive"
+                onClick={() => setShowDeleteFromListConfirm(true)}
+                className="text-muted-foreground focus:text-muted-foreground"
               >
                 <Trash2Icon className="mr-2 h-4 w-4" />
-                删除项目
+                从列表中删除
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setShowDeleteFromDiskConfirm(true)}
+                className="text-destructive focus:text-destructive"
+              >
+                <DeleteIcon className="mr-2 h-4 w-4" />
+                从磁盘删除
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -235,12 +246,21 @@ export function ProjectListItem({
 
       {/* 确认对话框 */}
       <ConfirmDialog
-        open={showDeleteConfirm}
-        onOpenChange={setShowDeleteConfirm}
-        title="删除项目"
+        open={showDeleteFromListConfirm}
+        onOpenChange={setShowDeleteFromListConfirm}
+        title="从列表中删除"
         description={`确定要从列表中删除项目 "${project.name}" 吗？此操作不会删除实际的文件夹。`}
         confirmText="删除"
         onConfirm={() => onDelete?.(project)}
+        variant="default"
+      />
+      <ConfirmDialog
+        open={showDeleteFromDiskConfirm}
+        onOpenChange={setShowDeleteFromDiskConfirm}
+        title="从磁盘删除"
+        description={`确定要删除项目 "${project.name}" 吗？此操作将永久删除项目文件夹及其所有内容，不可撤销。`}
+        confirmText="删除"
+        onConfirm={() => onDeleteFromDisk?.(project)}
         variant="destructive"
       />
       <ConfirmDialog
@@ -261,6 +281,7 @@ export function ProjectList({
   onOpen,
   onRefresh,
   onDelete,
+  onDeleteFromDisk,
   onToggleFavorite,
   onDeleteNodeModules,
 }: ProjectListProps) {
@@ -285,6 +306,7 @@ export function ProjectList({
           onOpen={onOpen}
           onRefresh={onRefresh}
           onDelete={onDelete}
+          onDeleteFromDisk={onDeleteFromDisk}
           onToggleFavorite={onToggleFavorite}
           onDeleteNodeModules={onDeleteNodeModules}
         />

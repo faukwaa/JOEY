@@ -35,8 +35,19 @@ export function useProjectActions() {
 
   // 删除项目
   const handleDeleteProject = useCallback((project: Project) => {
-    console.log('Deleting project:', project.name)
-    // TODO: 实现删除逻辑 - 从项目列表中移除,不删除实际文件夹
+    console.log('Deleting project from list:', project.name)
+    // 从项目列表中移除，不删除实际文件夹
+  }, [])
+
+  // 从磁盘删除项目
+  const handleDeleteProjectFromDisk = useCallback(async (project: Project) => {
+    try {
+      const result = await window.electronAPI.deleteProjectFromDisk(project.path)
+      return result
+    } catch (error) {
+      console.error('Failed to delete project from disk:', error)
+      return { success: false, error: String(error) }
+    }
   }, [])
 
   // 删除 node_modules
@@ -63,6 +74,7 @@ export function useProjectActions() {
     handleOpenProject,
     handleRefreshProject,
     handleDeleteProject,
+    handleDeleteProjectFromDisk,
     handleDeleteNodeModules,
     handleToggleFavorite
   }
