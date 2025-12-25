@@ -33,6 +33,11 @@ electron.contextBridge.exposeInMainWorld("electronAPI", {
   deleteNodeModules: (projectPath) => electron.ipcRenderer.invoke("delete-node-modules", projectPath),
   deleteProjectFromDisk: (projectPath) => electron.ipcRenderer.invoke("delete-project-from-disk", projectPath),
   refreshProjectInfo: (projectPath) => electron.ipcRenderer.invoke("refresh-project-info", projectPath),
+  // 窗口控制 APIs
+  windowMinimize: () => electron.ipcRenderer.invoke("window-minimize"),
+  windowMaximize: () => electron.ipcRenderer.invoke("window-maximize"),
+  windowClose: () => electron.ipcRenderer.invoke("window-close"),
+  windowIsMaximized: () => electron.ipcRenderer.invoke("window-is-maximized"),
   // 扫描进度监听
   onScanProgress: (callback) => {
     const handler = (_, progress) => {

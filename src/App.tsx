@@ -1,10 +1,12 @@
 import { useState, useCallback, useEffect, useMemo } from "react"
+import type { Project } from "@/types"
 import { AppSidebar } from "@/components/app-sidebar"
 import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
 import { ProjectListPage } from "@/components/ProjectListPage"
+import { TitleBar } from "@/components/TitleBar"
 import { ThemeProvider } from "@/components/theme-provider"
 import { useFolderScanning } from "@/hooks/useFolderScanning"
 import { useProjectLoading } from "@/hooks/useProjectLoading"
@@ -128,7 +130,7 @@ export function App() {
 
   return (
     <ThemeProvider>
-      <SidebarProvider className="h-svh overflow-hidden">
+      <SidebarProvider className="h-[100svh] overflow-hidden">
         <AppSidebar
         scannedDirs={currentScannedDirs}
         projectPaths={allProjectPaths}
@@ -136,7 +138,8 @@ export function App() {
         onPathSelect={handlePathSelect}
         onProjectSelect={handleProjectSelect}
       />
-      <SidebarInset className="h-full overflow-hidden">
+      <SidebarInset className="h-full overflow-hidden flex flex-col">
+        <TitleBar />
         <ProjectListPage
           allProjects={allProjects}
           setAllProjects={setAllProjects}

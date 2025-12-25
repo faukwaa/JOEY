@@ -193,6 +193,8 @@ function createWindow() {
     height: 800,
     minWidth: 800,
     minHeight: 600,
+    frame: false, // 隐藏原生标题栏
+    titleBarStyle: 'hidden', // macOS 隐藏标题栏
     icon: path.join(process.env.VITE_PUBLIC!, 'favicon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
@@ -802,4 +804,27 @@ ipcMain.handle('refresh-project-info', async (_, projectPath: string) => {
     console.error('Error refreshing project info:', error)
     return { success: false, error: String(error) }
   }
+})
+
+// 窗口控制
+ipcMain.handle('window-minimize', () => {
+  if (win) win.minimize()
+})
+
+ipcMain.handle('window-maximize', () => {
+  if (win) {
+    if (win.isMaximized()) {
+      win.unmaximize()
+    } else {
+      win.maximize()
+    }
+  }
+})
+
+ipcMain.handle('window-close', () => {
+  if (win) win.close()
+})
+
+ipcMain.handle('window-is-maximized', () => {
+  return win ? win.isMaximized() : false
 })

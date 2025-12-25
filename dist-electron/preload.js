@@ -32,6 +32,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
   deleteNodeModules: (projectPath) => ipcRenderer.invoke("delete-node-modules", projectPath),
   deleteProjectFromDisk: (projectPath) => ipcRenderer.invoke("delete-project-from-disk", projectPath),
   refreshProjectInfo: (projectPath) => ipcRenderer.invoke("refresh-project-info", projectPath),
+  // 窗口控制 APIs
+  windowMinimize: () => ipcRenderer.invoke("window-minimize"),
+  windowMaximize: () => ipcRenderer.invoke("window-maximize"),
+  windowClose: () => ipcRenderer.invoke("window-close"),
+  windowIsMaximized: () => ipcRenderer.invoke("window-is-maximized"),
   // 扫描进度监听
   onScanProgress: (callback) => {
     const handler = (_, progress) => {

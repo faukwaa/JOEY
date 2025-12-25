@@ -35,6 +35,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deleteNodeModules: (projectPath: string) => ipcRenderer.invoke('delete-node-modules', projectPath),
   deleteProjectFromDisk: (projectPath: string) => ipcRenderer.invoke('delete-project-from-disk', projectPath),
   refreshProjectInfo: (projectPath: string) => ipcRenderer.invoke('refresh-project-info', projectPath),
+  // 窗口控制 APIs
+  windowMinimize: () => ipcRenderer.invoke('window-minimize'),
+  windowMaximize: () => ipcRenderer.invoke('window-maximize'),
+  windowClose: () => ipcRenderer.invoke('window-close'),
+  windowIsMaximized: () => ipcRenderer.invoke('window-is-maximized'),
   // 扫描进度监听
   onScanProgress: (callback) => {
     const handler = (_: unknown, progress: { stage: string; current: number; total: number; message: string }) => {
@@ -89,6 +94,11 @@ declare global {
           packageManager?: 'npm' | 'yarn' | 'pnpm' | 'bun'
         }
       }>
+      // 窗口控制
+      windowMinimize: () => Promise<void>
+      windowMaximize: () => Promise<void>
+      windowClose: () => Promise<void>
+      windowIsMaximized: () => Promise<boolean>
       // 扫描进度事件
       onScanProgress: (callback: (progress: { stage: string; current: number; total: number; message: string }) => void) => () => void
     }
