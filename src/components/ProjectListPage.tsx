@@ -191,21 +191,9 @@ export function ProjectListPage({
   }
 
   return (
-    <div className="flex flex-1 flex-col h-full overflow-hidden">
-      {/* 控制栏 - 固定顶部，半透明模糊 */}
-      <div className="flex items-center justify-end px-4 py-3 bg-background/80 backdrop-blur-sm border-b shrink-0">
-        <ProjectControls
-          sortBy={sortBy}
-          sortOrder={sortOrder}
-          onSortByChange={setSortBy}
-          onSortOrderChange={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-          onRescan={handleScanAll}
-          projectCount={currentFolderProjects.length}
-        />
-      </div>
-
+    <div className="flex flex-1 flex-col h-full overflow-hidden relative">
       {/* 项目列表区域 - 可滚动 */}
-      <div className="flex-1 overflow-auto px-4 py-4">
+      <div className="flex-1 overflow-auto px-4 py-4 pt-20 pb-16">
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-muted-foreground">加载中...</div>
@@ -243,9 +231,21 @@ export function ProjectListPage({
         )}
       </div>
 
+      {/* 控制栏 - 固定顶部，半透明模糊 */}
+      <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-end px-4 py-3 bg-background/80 backdrop-blur-md border-b">
+        <ProjectControls
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSortByChange={setSortBy}
+          onSortOrderChange={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+          onRescan={handleScanAll}
+          projectCount={currentFolderProjects.length}
+        />
+      </div>
+
       {/* 统计信息 - 固定底部，半透明模糊 */}
       {currentFolderProjects.length > 0 && (
-        <div className="flex items-center justify-between px-4 py-3 text-sm text-muted-foreground bg-background/80 backdrop-blur-sm border-t shrink-0">
+        <div className="absolute bottom-0 left-0 right-0 z-10 flex items-center justify-between px-4 py-3 text-sm text-muted-foreground bg-background/80 backdrop-blur-md border-t">
           <span>
             共 <span className="font-semibold text-foreground">{currentFolderProjects.length}</span> 个项目
           </span>
