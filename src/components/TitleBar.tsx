@@ -24,11 +24,9 @@ export function TitleBar() {
     window.electronAPI.windowClose()
   }
 
-  // macOS 不需要自定义窗口控制按钮
+  // macOS 不需要自定义标题栏
   if (isMacOS) {
-    return (
-      <div className="h-12 bg-background border-b select-none" style={{ WebkitAppRegion: 'drag' } as React.CSSProperties} />
-    )
+    return null
   }
 
   return (
