@@ -20,7 +20,6 @@ import {
   Trash2Icon,
   RefreshCwIcon,
   StarIcon,
-  StarOffIcon,
   GitBranchIcon,
   DeleteIcon,
   Code2Icon,
@@ -202,6 +201,20 @@ export function ProjectListItem({
 
         {/* 右侧：操作按钮 - 始终在最右边 */}
         <div className="flex items-center gap-1 flex-shrink-0 ml-auto sm:ml-2">
+          {/* 收藏按钮 */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => onToggleFavorite?.(project)}
+          >
+            {project.favorite ? (
+              <StarIcon className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+            ) : (
+              <StarIcon className="h-4 w-4" />
+            )}
+          </Button>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -242,19 +255,6 @@ export function ProjectListItem({
               <DropdownMenuItem onClick={() => onRefresh?.(project)}>
                 <RefreshCwIcon className="mr-2 h-4 w-4" />
                 刷新信息
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onToggleFavorite?.(project)}>
-                {project.favorite ? (
-                  <>
-                    <StarOffIcon className="mr-2 h-4 w-4" />
-                    取消收藏
-                  </>
-                ) : (
-                  <>
-                    <StarIcon className="mr-2 h-4 w-4" />
-                    添加收藏
-                  </>
-                )}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               {project.hasNodeModules && (
