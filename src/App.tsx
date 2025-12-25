@@ -5,6 +5,7 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar"
 import { ProjectListPage } from "@/components/ProjectListPage"
+import { ThemeProvider } from "@/components/theme-provider"
 import { useFolderScanning } from "@/hooks/useFolderScanning"
 import { useProjectLoading } from "@/hooks/useProjectLoading"
 
@@ -126,8 +127,9 @@ export function App() {
   }, [folderScannedDirs, handlePathSelect])
 
   return (
-    <SidebarProvider className="h-svh overflow-hidden">
-      <AppSidebar
+    <ThemeProvider>
+      <SidebarProvider className="h-svh overflow-hidden">
+        <AppSidebar
         scannedDirs={currentScannedDirs}
         projectPaths={allProjectPaths}
         allProjects={allProjects}
@@ -153,6 +155,7 @@ export function App() {
         />
       </SidebarInset>
     </SidebarProvider>
+    </ThemeProvider>
   )
 }
 

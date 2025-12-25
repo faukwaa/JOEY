@@ -68,6 +68,47 @@ const saveScanFolders = (folders: string[]) => {
   }
 }
 
+// 用户设置文件路径
+const getUserSettingsPath = () => {
+  const userDataPath = app.getPath('userData')
+  return path.join(userDataPath, 'config', 'user-settings.json')
+}
+
+// 用户设置类型
+interface UserSettings {
+  theme?: 'light' | 'dark' | 'system'
+}
+
+// 获取用户设置
+const getUserSettings = (): UserSettings => {
+  try {
+    const settingsPath = getUserSettingsPath()
+    if (existsSync(settingsPath)) {
+      const data = readFileSync(settingsPath, 'utf-8')
+      return JSON.parse(data)
+    }
+  } catch (error) {
+    console.error('Error reading user settings:', error)
+  }
+  return {}
+}
+
+// 保存用户设置
+const saveUserSettings = (settings: UserSettings) => {
+  try {
+    const settingsPath = getUserSettingsPath()
+    const settingsDir = path.dirname(settingsPath)
+    if (!existsSync(settingsDir)) {
+      mkdirSync(settingsDir, { recursive: true })
+    }
+    writeFileSync(settingsPath, JSON.stringify(settings, null, 2))
+    return { success: true }
+  } catch (error) {
+    console.error('Error saving user settings:', error)
+    return { success: false, error: String(error) }
+  }
+}
+
 // 项目缓存文件路径
 const getProjectsCachePath = () => {
   const userDataPath = app.getPath('userData')
@@ -513,6 +554,17 @@ ipcMain.handle('remove-scan-folder', async (_, folder: string) => {
   const folders = getScanFolders()
   const newFolders = folders.filter(f => f !== folder)
   return saveScanFolders(newFolders)
+})
+
+// 获取用户设置
+ipcMain.handle('get-user-settings', async () => {
+  const settings = getUserSettings()
+  return { settings }
+})
+
+// 保存用户设置
+ipcMain.handle('save-user-settings', async (_, settings: UserSettings) => {
+  return saveUserSettings(settings)
 })
 
 // 保存项目缓存（由前端调用）

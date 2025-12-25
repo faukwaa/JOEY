@@ -25,6 +25,9 @@ electron.contextBridge.exposeInMainWorld("electronAPI", {
   addScanFolder: (folder) => electron.ipcRenderer.invoke("add-scan-folder", folder),
   removeScanFolder: (folder) => electron.ipcRenderer.invoke("remove-scan-folder", folder),
   getProjectStats: (projectPath) => electron.ipcRenderer.invoke("get-project-stats", projectPath),
+  // User settings APIs
+  getUserSettings: () => electron.ipcRenderer.invoke("get-user-settings"),
+  saveUserSettings: (settings) => electron.ipcRenderer.invoke("save-user-settings", settings),
   saveProjectsCache: (projects, folders, scannedDirs, folder, favorites, scannedDirsMap) => electron.ipcRenderer.invoke("save-projects-cache", projects, folders, scannedDirs, folder, favorites, scannedDirsMap),
   // 项目操作 APIs
   deleteNodeModules: (projectPath) => electron.ipcRenderer.invoke("delete-node-modules", projectPath),

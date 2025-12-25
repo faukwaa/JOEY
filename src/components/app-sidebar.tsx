@@ -1,5 +1,6 @@
 import { NavScan } from "@/components/nav-scan"
 import { NavFavorites } from "@/components/nav-favorites"
+import { ThemeToggle } from "@/components/theme-toggle"
 import {
   Sidebar,
   SidebarContent,
@@ -21,9 +22,12 @@ export function AppSidebar({ scannedDirs, projectPaths, allProjects, onPathSelec
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-2 py-2">
-          <FolderOpenIcon className="h-6 w-6" />
-          <span className="text-lg font-semibold">项目管理</span>
+        <div className="flex items-center justify-between px-2 py-2">
+          <div className="flex items-center gap-2">
+            <FolderOpenIcon className="h-6 w-6" />
+            <span className="text-lg font-semibold">项目管理</span>
+          </div>
+          <ThemeToggle />
         </div>
       </SidebarHeader>
       <SidebarContent>
