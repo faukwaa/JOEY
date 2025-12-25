@@ -158,31 +158,31 @@ export function ProjectListItem({
         {/* 中间：徽章标签 */}
         <div className="flex items-center gap-1 flex-shrink-0 flex-wrap">
           {project.gitBranch && (
-            <Badge variant="secondary" className="text-[10px] h-5 px-1.5 whitespace-nowrap">
+            <Badge variant="secondary" className="text-[10px] h-5 px-1.5 whitespace-nowrap text-blue-600 bg-blue-50 dark:bg-blue-950/30 dark:text-blue-400">
               <GitBranchIcon className="mr-0.5 h-2.5 w-2.5" />
               {project.gitBranch}
             </Badge>
           )}
 
           {project.gitStatus === 'modified' && (
-            <Badge variant="secondary" className="text-[10px] h-5 px-1.5 border-orange-500/30 text-orange-600 bg-orange-50 dark:bg-orange-950/30 dark:text-orange-400 whitespace-nowrap">
-              {project.gitChanges}
+            <Badge variant="secondary" className="text-[10px] h-5 px-1.5 text-orange-600 bg-orange-50 dark:bg-orange-950/30 dark:text-orange-400 whitespace-nowrap">
+              {project.gitChanges} commits
             </Badge>
           )}
 
           {project.hasNodeModules && (
-            <Badge variant="secondary" className="text-[10px] h-5 px-1.5 whitespace-nowrap">
+            <Badge variant="secondary" className="text-[10px] h-5 px-1.5 whitespace-nowrap text-green-600 bg-green-50 dark:bg-green-950/30 dark:text-green-400">
               node_modules
             </Badge>
           )}
 
           {project.packageManager && (
-            <Badge variant="secondary" className="text-[10px] h-5 px-1.5 whitespace-nowrap">
+            <Badge variant="secondary" className="text-[10px] h-5 px-1.5 whitespace-nowrap text-purple-600 bg-purple-50 dark:bg-purple-950/30 dark:text-purple-400">
               {project.packageManager}
             </Badge>
           )}
 
-          <Badge variant="secondary" className="text-[10px] h-5 px-1.5 whitespace-nowrap">
+          <Badge variant="secondary" className="text-[10px] h-5 px-1.5 whitespace-nowrap text-slate-600 bg-slate-50 dark:bg-slate-950/30 dark:text-slate-400">
             {formatSize(project.size)}
           </Badge>
         </div>
