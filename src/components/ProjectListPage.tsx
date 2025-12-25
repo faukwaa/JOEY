@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { SearchIcon } from 'lucide-react'
 import type { Project } from '@/types'
 import { ProjectList } from '@/components/ProjectList'
@@ -21,7 +21,7 @@ interface ProjectListPageProps {
   stopScan: (folder: string) => void
   loadProjects: (onProjectsLoaded?: (projects: Project[]) => void, onScannedDirsLoaded?: (folder: string, dirs: string[]) => void) => Promise<void>
   setInitialProjects: (projects: Project[]) => void
-  saveFavorites: () => Promise<void>
+  saveFavorites: (projectsToSave?: Project[]) => Promise<void>
   highlightedProjectId?: string
 }
 
@@ -64,12 +64,43 @@ export function ProjectListPage({
   // 判断是否正在搜索中
   const isSearching = searchQuery !== null && searchQuery !== debouncedSearchQuery
 
-  // 根据搜索关键词过滤项目（使用防抖后的查询）
-  const filteredProjects = currentFolderProjects.filter(project => {
-    if (!debouncedSearchQuery || !debouncedSearchQuery.trim()) return true
-    const query = debouncedSearchQuery.toLowerCase()
-    return project.name.toLowerCase().includes(query) || project.path.toLowerCase().includes(query)
-  })
+  // 根据搜索关键词过滤项目（使用防抖后的查询）- 使用 useMemo 优化
+  const filteredProjects = useMemo(() => {
+    return currentFolderProjects.filter(project => {
+      if (!debouncedSearchQuery || !debouncedSearchQuery.trim()) return true
+      const query = debouncedSearchQuery.toLowerCase()
+      return project.name.toLowerCase().includes(query) || project.path.toLowerCase().includes(query)
+    })
+  }, [currentFolderProjects, debouncedSearchQuery])
+
+  // 排序项目 - 使用 useMemo 优化
+  const sortedProjects = useMemo(() => {
+    return [...filteredProjects].sort((a, b) => {
+      let comparison = 0
+
+      switch (sortBy) {
+        case 'name':
+          comparison = a.name.localeCompare(b.name)
+          break
+        case 'size':
+          comparison = a.size - b.size
+          break
+        case 'createdAt':
+          comparison = a.createdAt.getTime() - b.createdAt.getTime()
+          break
+        case 'updatedAt':
+          comparison = a.updatedAt.getTime() - b.updatedAt.getTime()
+          break
+      }
+
+      return sortOrder === 'asc' ? comparison : -comparison
+    })
+  }, [filteredProjects, sortBy, sortOrder])
+
+  // 计算总大小（基于过滤后的项目）- 使用 useMemo 优化
+  const totalSize = useMemo(() => {
+    return filteredProjects.reduce((sum, project) => sum + project.size, 0)
+  }, [filteredProjects])
 
   // 处理项目刷新并更新列表
   const handleRefreshAndUpdate = useCallback(async (project: Project) => {
@@ -110,31 +141,6 @@ export function ProjectListPage({
     // 从项目列表中移除
     setAllProjects(allProjects.filter(p => p.id !== project.id))
   }, [handleDeleteProject, allProjects, setAllProjects])
-
-  // 排序项目
-  const sortedProjects = [...filteredProjects].sort((a, b) => {
-    let comparison = 0
-
-    switch (sortBy) {
-      case 'name':
-        comparison = a.name.localeCompare(b.name)
-        break
-      case 'size':
-        comparison = a.size - b.size
-        break
-      case 'createdAt':
-        comparison = a.createdAt.getTime() - b.createdAt.getTime()
-        break
-      case 'updatedAt':
-        comparison = a.updatedAt.getTime() - b.updatedAt.getTime()
-        break
-    }
-
-    return sortOrder === 'asc' ? comparison : -comparison
-  })
-
-  // 计算总大小（基于过滤后的项目）
-  const totalSize = filteredProjects.reduce((sum, project) => sum + project.size, 0)
 
   // 监听扫描进度
   useEffect(() => {
