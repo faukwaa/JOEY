@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { SortAscIcon, SortDescIcon, RefreshCwIcon, SearchIcon, XIcon, LoaderIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,7 +21,7 @@ interface ProjectControlsProps {
   isSearching: boolean
 }
 
-export function ProjectControls({
+function ProjectControls({
   sortBy,
   sortOrder,
   onSortByChange,
@@ -117,3 +118,5 @@ export function ProjectControls({
     </div>
   )
 }
+
+export default memo(ProjectControls)

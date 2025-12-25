@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useMemo } from 'react'
 import { SearchIcon } from 'lucide-react'
 import type { Project } from '@/types'
 import { ProjectList } from '@/components/ProjectList'
-import { ProjectControls } from '@/components/ProjectControls'
+import ProjectControls from '@/components/ProjectControls'
 import { EmptyProjectState } from '@/components/EmptyProjectState'
 import { ScanConfirmDialogs } from '@/components/ScanConfirmDialogs'
 import { useProjectActions } from '@/hooks/useProjectActions'
@@ -51,6 +51,11 @@ export function ProjectListPage({
   const { handleOpenProject, handleOpenTerminal, handleOpenVSCode, handleOpenQoder, handleRefreshProject, handleDeleteProject, handleDeleteProjectFromDisk, handleDeleteNodeModules } = useProjectActions()
 
   const currentScanState = getCurrentScanState(currentScanFolder)
+
+  // 处理排序方向切换
+  const handleSortOrderChange = useCallback(() => {
+    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+  }, [sortOrder])
 
   // 防抖搜索查询
   useEffect(() => {
@@ -179,30 +184,30 @@ export function ProjectListPage({
   }, [allProjects, setAllProjects, saveFavorites])
 
   // 处理停止扫描
-  const handleStopScan = () => {
+  const handleStopScan = useCallback(() => {
     setShowStopConfirm(true)
-  }
+  }, [])
 
-  const confirmStopScan = () => {
+  const confirmStopScan = useCallback(() => {
     setShowStopConfirm(false)
     stopScan(currentScanFolder)
-  }
+  }, [stopScan, currentScanFolder])
 
-  const cancelStopScan = () => {
+  const cancelStopScan = useCallback(() => {
     setShowStopConfirm(false)
-  }
+  }, [])
 
   // 处理扫描
-  const confirmRescan = () => {
+  const confirmRescan = useCallback(() => {
     setShowRescanConfirm(false)
     startScan(currentScanFolder)
-  }
+  }, [startScan, currentScanFolder])
 
-  const cancelRescan = () => {
+  const cancelRescan = useCallback(() => {
     setShowRescanConfirm(false)
-  }
+  }, [])
 
-  const handleScanAll = () => {
+  const handleScanAll = useCallback(() => {
     if (!currentScanFolder) {
       console.warn('没有选中的扫描目录')
       return
@@ -219,7 +224,7 @@ export function ProjectListPage({
     }
     // 否则直接开始扫描
     startScan(currentScanFolder)
-  }
+  }, [currentScanFolder, currentScanState.scanning, currentFolderProjects.length, searchQuery, startScan, handleStopScan])
 
   return (
     <div className="flex flex-1 flex-col h-full overflow-hidden relative">
@@ -276,7 +281,7 @@ export function ProjectListPage({
           sortBy={sortBy}
           sortOrder={sortOrder}
           onSortByChange={setSortBy}
-          onSortOrderChange={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+          onSortOrderChange={handleSortOrderChange}
           onRescan={handleScanAll}
           projectCount={currentFolderProjects.length}
           searchQuery={searchQuery}
