@@ -1,4 +1,4 @@
-import { SortAscIcon, SortDescIcon, RefreshCwIcon, SearchIcon, XIcon } from 'lucide-react'
+import { SortAscIcon, SortDescIcon, RefreshCwIcon, SearchIcon, XIcon, LoaderIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -17,6 +17,7 @@ interface ProjectControlsProps {
   projectCount: number
   searchQuery: string | null
   onSearchChange: (query: string) => void
+  isSearching: boolean
 }
 
 export function ProjectControls({
@@ -27,7 +28,8 @@ export function ProjectControls({
   onRescan,
   projectCount,
   searchQuery,
-  onSearchChange
+  onSearchChange,
+  isSearching
 }: ProjectControlsProps) {
   return (
     <div className="flex items-center gap-2">
@@ -42,9 +44,12 @@ export function ProjectControls({
                 placeholder="搜索项目..."
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="pl-8 h-8 w-64"
+                className="pl-8 h-8 w-64 pr-8"
                 autoFocus
               />
+              {isSearching && (
+                <LoaderIcon className="absolute right-8 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+              )}
               {searchQuery && (
                 <Button
                   variant="ghost"

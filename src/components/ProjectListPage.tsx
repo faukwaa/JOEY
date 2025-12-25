@@ -46,15 +46,28 @@ export function ProjectListPage({
   const [sortBy, setSortBy] = useState<'name' | 'createdAt' | 'updatedAt' | 'size'>('updatedAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [searchQuery, setSearchQuery] = useState<string | null>(null)
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string | null>(null)
 
   const { handleOpenProject, handleOpenTerminal, handleOpenVSCode, handleOpenQoder, handleRefreshProject, handleDeleteProject, handleDeleteProjectFromDisk, handleDeleteNodeModules } = useProjectActions()
 
   const currentScanState = getCurrentScanState(currentScanFolder)
 
-  // 根据搜索关键词过滤项目
+  // 防抖搜索查询
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery)
+    }, 300) // 300ms 防抖延迟
+
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  // 判断是否正在搜索中
+  const isSearching = searchQuery !== null && searchQuery !== debouncedSearchQuery
+
+  // 根据搜索关键词过滤项目（使用防抖后的查询）
   const filteredProjects = currentFolderProjects.filter(project => {
-    if (!searchQuery || !searchQuery.trim()) return true
-    const query = searchQuery.toLowerCase()
+    if (!debouncedSearchQuery || !debouncedSearchQuery.trim()) return true
+    const query = debouncedSearchQuery.toLowerCase()
     return project.name.toLowerCase().includes(query) || project.path.toLowerCase().includes(query)
   })
 
@@ -231,7 +244,7 @@ export function ProjectListPage({
             <SearchIcon className="h-16 w-16 text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">未找到匹配的项目</h3>
             <p className="text-sm text-muted-foreground max-w-md">
-              没有找到与 "{searchQuery}" 匹配的项目
+              没有找到与 "{searchQuery || ''}" 匹配的项目
             </p>
           </div>
         ) : (
@@ -262,6 +275,7 @@ export function ProjectListPage({
           projectCount={currentFolderProjects.length}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          isSearching={isSearching}
         />
       </div>
 
@@ -270,7 +284,7 @@ export function ProjectListPage({
         <div className="absolute bottom-0 left-0 right-0 z-10 flex items-center justify-between px-4 py-3 text-sm text-muted-foreground bg-background/40 backdrop-blur-lg border-t">
           <span>
             共 <span className="font-semibold text-foreground">{filteredProjects.length}</span> 个项目
-            {searchQuery && (
+            {searchQuery && searchQuery.trim() && (
               <span className="ml-2 text-muted-foreground">
                 (搜索: <span className="font-medium">{searchQuery}</span>)
               </span>
