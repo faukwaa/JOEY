@@ -45,7 +45,7 @@ export function ProjectListPage({
   const [showRescanConfirm, setShowRescanConfirm] = useState(false)
   const [sortBy, setSortBy] = useState<'name' | 'createdAt' | 'updatedAt' | 'size'>('updatedAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchQuery, setSearchQuery] = useState<string | null>(null)
 
   const { handleOpenProject, handleOpenTerminal, handleOpenVSCode, handleOpenQoder, handleRefreshProject, handleDeleteProject, handleDeleteProjectFromDisk, handleDeleteNodeModules } = useProjectActions()
 
@@ -53,7 +53,7 @@ export function ProjectListPage({
 
   // 根据搜索关键词过滤项目
   const filteredProjects = currentFolderProjects.filter(project => {
-    if (!searchQuery.trim()) return true
+    if (!searchQuery || !searchQuery.trim()) return true
     const query = searchQuery.toLowerCase()
     return project.name.toLowerCase().includes(query) || project.path.toLowerCase().includes(query)
   })

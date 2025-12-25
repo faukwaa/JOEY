@@ -15,7 +15,7 @@ interface ProjectControlsProps {
   onSortOrderChange: () => void
   onRescan: () => void
   projectCount: number
-  searchQuery: string
+  searchQuery: string | null
   onSearchChange: (query: string) => void
 }
 
@@ -33,7 +33,7 @@ export function ProjectControls({
     <div className="flex items-center gap-2">
       {/* 搜索 */}
       <div className="flex items-center gap-2">
-        {searchQuery ? (
+        {searchQuery !== null ? (
           <div className="flex items-center gap-2">
             <div className="relative">
               <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -43,22 +43,25 @@ export function ProjectControls({
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
                 className="pl-8 h-8 w-64"
+                autoFocus
               />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute right-0 top-0 h-8 w-8"
-                onClick={() => onSearchChange('')}
-              >
-                <XIcon className="h-4 w-4" />
-              </Button>
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-8 w-8"
+                  onClick={() => onSearchChange('')}
+                >
+                  <XIcon className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </div>
         ) : (
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onSearchChange(' ')}
+            onClick={() => onSearchChange('')}
           >
             <SearchIcon className="h-4 w-4" />
           </Button>
