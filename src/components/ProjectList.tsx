@@ -133,6 +133,12 @@ export function ProjectListItem({
             </Badge>
           )}
 
+          {project.hasNodeModules && (
+            <Badge variant="secondary" className="text-[10px] h-5 px-1.5 whitespace-nowrap">
+              node_modules
+            </Badge>
+          )}
+
           {project.packageManager && (
             <Badge variant="secondary" className="text-[10px] h-5 px-1.5 whitespace-nowrap">
               {project.packageManager}
@@ -144,8 +150,22 @@ export function ProjectListItem({
           </Badge>
         </div>
 
-        {/* 时间信息 - 更紧凑 */}
-        <div className="flex-shrink-0 text-[10px] text-muted-foreground text-right min-w-[70px] hidden sm:block">
+        {/* 时间信息 - 显示创建和更新时间 */}
+        <div className="flex-shrink-0 text-[10px] text-muted-foreground text-right min-w-[120px] hidden md:block">
+          <div className="space-y-0.5">
+            <div className="flex items-center justify-end gap-1">
+              <span className="opacity-70">创建:</span>
+              <span className="font-medium">{formatDate(project.createdAt)}</span>
+            </div>
+            <div className="flex items-center justify-end gap-1">
+              <span className="opacity-70">更新:</span>
+              <span className="font-medium">{formatDate(project.updatedAt)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 时间信息 - 小屏幕只显示更新时间 */}
+        <div className="flex-shrink-0 text-[10px] text-muted-foreground text-right min-w-[70px] md:hidden">
           {formatDate(project.updatedAt)}
         </div>
 
