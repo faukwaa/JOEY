@@ -23,6 +23,7 @@ import {
   StarOffIcon,
   GitBranchIcon,
   DeleteIcon,
+  Code2Icon,
 } from 'lucide-react'
 import { Icon } from '@iconify/react'
 import { formatSize, formatDate } from '@/lib/format'
@@ -219,7 +220,7 @@ export function ProjectListItem({
                     VSCode
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onOpenQoder?.(project)}>
-                    <Icon icon="mdi:code-braces" className="mr-2 h-4 w-4" />
+                    <Code2Icon className="mr-2 h-4 w-4" />
                     Qoder
                   </DropdownMenuItem>
                 </DropdownMenuSubContent>
