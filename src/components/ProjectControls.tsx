@@ -1,5 +1,6 @@
-import { SortAscIcon, SortDescIcon, RefreshCwIcon } from 'lucide-react'
+import { SortAscIcon, SortDescIcon, RefreshCwIcon, SearchIcon, XIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +15,8 @@ interface ProjectControlsProps {
   onSortOrderChange: () => void
   onRescan: () => void
   projectCount: number
+  searchQuery: string
+  onSearchChange: (query: string) => void
 }
 
 export function ProjectControls({
@@ -22,10 +25,46 @@ export function ProjectControls({
   onSortByChange,
   onSortOrderChange,
   onRescan,
-  projectCount
+  projectCount,
+  searchQuery,
+  onSearchChange
 }: ProjectControlsProps) {
   return (
     <div className="flex items-center gap-2">
+      {/* 搜索 */}
+      <div className="flex items-center gap-2">
+        {searchQuery ? (
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="搜索项目..."
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                className="pl-8 h-8 w-64"
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-0 top-0 h-8 w-8"
+                onClick={() => onSearchChange('')}
+              >
+                <XIcon className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onSearchChange(' ')}
+          >
+            <SearchIcon className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+
       {/* 排序 */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
+import { SearchIcon } from 'lucide-react'
 import type { Project } from '@/types'
 import { ProjectList } from '@/components/ProjectList'
 import { ProjectControls } from '@/components/ProjectControls'
@@ -44,10 +45,18 @@ export function ProjectListPage({
   const [showRescanConfirm, setShowRescanConfirm] = useState(false)
   const [sortBy, setSortBy] = useState<'name' | 'createdAt' | 'updatedAt' | 'size'>('updatedAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  const [searchQuery, setSearchQuery] = useState('')
 
   const { handleOpenProject, handleOpenTerminal, handleOpenVSCode, handleOpenQoder, handleRefreshProject, handleDeleteProject, handleDeleteProjectFromDisk, handleDeleteNodeModules } = useProjectActions()
 
   const currentScanState = getCurrentScanState(currentScanFolder)
+
+  // 根据搜索关键词过滤项目
+  const filteredProjects = currentFolderProjects.filter(project => {
+    if (!searchQuery.trim()) return true
+    const query = searchQuery.toLowerCase()
+    return project.name.toLowerCase().includes(query) || project.path.toLowerCase().includes(query)
+  })
 
   // 处理项目刷新并更新列表
   const handleRefreshAndUpdate = useCallback(async (project: Project) => {
@@ -90,7 +99,7 @@ export function ProjectListPage({
   }, [handleDeleteProject, allProjects, setAllProjects])
 
   // 排序项目
-  const sortedProjects = [...currentFolderProjects].sort((a, b) => {
+  const sortedProjects = [...filteredProjects].sort((a, b) => {
     let comparison = 0
 
     switch (sortBy) {
@@ -111,8 +120,8 @@ export function ProjectListPage({
     return sortOrder === 'asc' ? comparison : -comparison
   })
 
-  // 计算总大小
-  const totalSize = currentFolderProjects.reduce((sum, project) => sum + project.size, 0)
+  // 计算总大小（基于过滤后的项目）
+  const totalSize = filteredProjects.reduce((sum, project) => sum + project.size, 0)
 
   // 监听扫描进度
   useEffect(() => {
@@ -185,7 +194,7 @@ export function ProjectListPage({
       return
     }
     // 如果当前目录已有项目，显示重新扫描确认对话框
-    if (currentFolderProjects.length > 0) {
+    if (currentFolderProjects.length > 0 && !searchQuery) {
       setShowRescanConfirm(true)
       return
     }
@@ -217,6 +226,14 @@ export function ProjectListPage({
             scanProgress={currentScanState.progress}
             onScan={handleScanAll}
           />
+        ) : filteredProjects.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center p-12">
+            <SearchIcon className="h-16 w-16 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">未找到匹配的项目</h3>
+            <p className="text-sm text-muted-foreground max-w-md">
+              没有找到与 "{searchQuery}" 匹配的项目
+            </p>
+          </div>
         ) : (
           <ProjectList
             projects={sortedProjects}
@@ -243,14 +260,21 @@ export function ProjectListPage({
           onSortOrderChange={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
           onRescan={handleScanAll}
           projectCount={currentFolderProjects.length}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
         />
       </div>
 
       {/* 统计信息 - 固定底部，半透明模糊 */}
-      {currentFolderProjects.length > 0 && (
+      {filteredProjects.length > 0 && (
         <div className="absolute bottom-0 left-0 right-0 z-10 flex items-center justify-between px-4 py-3 text-sm text-muted-foreground bg-background/40 backdrop-blur-lg border-t">
           <span>
-            共 <span className="font-semibold text-foreground">{currentFolderProjects.length}</span> 个项目
+            共 <span className="font-semibold text-foreground">{filteredProjects.length}</span> 个项目
+            {searchQuery && (
+              <span className="ml-2 text-muted-foreground">
+                (搜索: <span className="font-medium">{searchQuery}</span>)
+              </span>
+            )}
           </span>
           <span>
             占用 <span className="font-semibold text-foreground">{formatSize(totalSize)}</span>
