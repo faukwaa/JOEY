@@ -98,10 +98,11 @@ type CacheData = {
   folders: string[]
   scannedDirs?: string[]  // 向后兼容
   scannedDirsMap?: Record<string, string[]>  // 新格式：映射文件夹到扫描路径
+  favorites?: string[]  // 收藏的项目 ID 列表
   scannedAt: string
 }
 
-const saveProjectsCache = (projects: unknown[], folders: string[], scannedDirs?: string[], folder?: string) => {
+const saveProjectsCache = (projects: unknown[], folders: string[], scannedDirs?: string[], folder?: string, favorites?: string[]) => {
   try {
     const cachePath = getProjectsCachePath()
 
@@ -127,6 +128,7 @@ const saveProjectsCache = (projects: unknown[], folders: string[], scannedDirs?:
       folders,
       scannedDirs: scannedDirs || [],  // 向后兼容
       scannedDirsMap,
+      favorites,
       scannedAt: new Date().toISOString(),
     }
     writeFileSync(cachePath, JSON.stringify(cache, null, 2))
@@ -510,8 +512,8 @@ ipcMain.handle('remove-scan-folder', async (_, folder: string) => {
 })
 
 // 保存项目缓存（由前端调用）
-ipcMain.handle('save-projects-cache', async (_, projects: unknown[], folders: string[], scannedDirs?: string[], folder?: string) => {
-  return saveProjectsCache(projects, folders, scannedDirs, folder)
+ipcMain.handle('save-projects-cache', async (_, projects: unknown[], folders: string[], scannedDirs?: string[], folder?: string, favorites?: string[]) => {
+  return saveProjectsCache(projects, folders, scannedDirs, folder, favorites)
 })
 
 // 获取项目统计信息

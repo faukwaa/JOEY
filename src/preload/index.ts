@@ -27,7 +27,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   addScanFolder: (folder: string) => ipcRenderer.invoke('add-scan-folder', folder),
   removeScanFolder: (folder: string) => ipcRenderer.invoke('remove-scan-folder', folder),
   getProjectStats: (projectPath: string) => ipcRenderer.invoke('get-project-stats', projectPath),
-  saveProjectsCache: (projects: unknown[], folders: string[], scannedDirs?: string[], folder?: string) => ipcRenderer.invoke('save-projects-cache', projects, folders, scannedDirs, folder),
+  saveProjectsCache: (projects: unknown[], folders: string[], scannedDirs?: string[], folder?: string, favorites?: string[]) => ipcRenderer.invoke('save-projects-cache', projects, folders, scannedDirs, folder, favorites),
   // 项目操作 APIs
   deleteNodeModules: (projectPath: string) => ipcRenderer.invoke('delete-node-modules', projectPath),
   deleteProjectFromDisk: (projectPath: string) => ipcRenderer.invoke('delete-project-from-disk', projectPath),
@@ -51,7 +51,7 @@ declare global {
       on: (channel: string, callback: (...args: unknown[]) => void) => void
       invoke: (channel: string, ...args: unknown[]) => Promise<unknown>
       scanProjects: (folders: string[]) => Promise<{ projects: unknown[]; scannedDirs: string[] }>
-      getProjectsCache: () => Promise<{ projects: unknown[]; folders: string[]; scannedDirs?: string[]; scannedDirsMap?: Record<string, string[]>; scannedAt: string } | null>
+      getProjectsCache: () => Promise<{ projects: unknown[]; folders: string[]; scannedDirs?: string[]; scannedDirsMap?: Record<string, string[]>; favorites?: string[]; scannedAt: string } | null>
       getGitInfo: (projectPath: string) => Promise<{ branch: string | null; status: 'clean' | 'modified' | 'error' | 'no-git'; changes: number }>
       openProjectFolder: (projectPath: string) => Promise<{ success: boolean }>
       openProjectTerminal: (projectPath: string) => Promise<{ success: boolean; error?: string }>

@@ -62,7 +62,16 @@ export function useProjectLoading() {
       const cache = await window.electronAPI.getProjectsCache()
       if (cache && cache.projects) {
         console.log('从缓存加载项目列表')
-        const cachedProjects = convertCachedProjects(cache.projects)
+        let cachedProjects = convertCachedProjects(cache.projects)
+
+        // 恢复收藏状态
+        if (cache.favorites && Array.isArray(cache.favorites)) {
+          cachedProjects = cachedProjects.map(p => ({
+            ...p,
+            favorite: cache.favorites!.includes(p.id)
+          }))
+        }
+
         onProjectsLoaded?.(cachedProjects)
 
         // 加载扫描过的目录

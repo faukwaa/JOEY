@@ -168,11 +168,14 @@ export function useFolderScanning() {
           })
 
           // 直接使用 scanResult.scannedDirs 而不是从 folderScannedDirs 获取
+          // 提取收藏的项目 ID
+          const favorites = allProjects.filter(p => p.favorite).map(p => p.id)
           await window.electronAPI.saveProjectsCache(
             serializedProjects,
             folders,
             scanResult.scannedDirs || [],
-            folder  // 传递 folder 参数，用于存储到 scannedDirsMap
+            folder,  // 传递 folder 参数，用于存储到 scannedDirsMap
+            favorites  // 传递收藏的项目 ID 列表
           )
           console.log('项目列表已保存到缓存')
         } catch (error) {
@@ -197,7 +200,7 @@ export function useFolderScanning() {
       })
       scanningRefs.current.delete(folder)
     }
-  }, [folderScanStates])
+  }, [folderScanStates, allProjects])
 
   // 停止扫描
   const stopScan = useCallback((folder: string) => {

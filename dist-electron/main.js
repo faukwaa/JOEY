@@ -62,7 +62,7 @@ const getProjectsCache = () => {
   }
   return null;
 };
-const saveProjectsCache = (projects, folders, scannedDirs, folder) => {
+const saveProjectsCache = (projects, folders, scannedDirs, folder, favorites) => {
   try {
     const cachePath = getProjectsCachePath();
     let existingCache = null;
@@ -81,6 +81,7 @@ const saveProjectsCache = (projects, folders, scannedDirs, folder) => {
       scannedDirs: scannedDirs || [],
       // 向后兼容
       scannedDirsMap,
+      favorites,
       scannedAt: (/* @__PURE__ */ new Date()).toISOString()
     };
     writeFileSync(cachePath, JSON.stringify(cache, null, 2));
@@ -357,8 +358,8 @@ ipcMain.handle("remove-scan-folder", async (_, folder) => {
   const newFolders = folders.filter((f) => f !== folder);
   return saveScanFolders(newFolders);
 });
-ipcMain.handle("save-projects-cache", async (_, projects, folders, scannedDirs, folder) => {
-  return saveProjectsCache(projects, folders, scannedDirs, folder);
+ipcMain.handle("save-projects-cache", async (_, projects, folders, scannedDirs, folder, favorites) => {
+  return saveProjectsCache(projects, folders, scannedDirs, folder, favorites);
 });
 ipcMain.handle("get-project-stats", async (_, projectPath) => {
   try {
