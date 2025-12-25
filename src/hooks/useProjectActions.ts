@@ -64,7 +64,7 @@ export function useProjectActions() {
         const updatedProject: Project = {
           ...project,
           ...result.projectInfo,
-          gitBranch: result.projectInfo.gitBranch,
+          gitBranch: result.projectInfo.gitBranch ?? undefined,
           gitStatus: result.projectInfo.gitStatus,
           gitChanges: result.projectInfo.gitChanges
         }

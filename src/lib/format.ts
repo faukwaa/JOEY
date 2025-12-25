@@ -14,7 +14,9 @@ export function formatSize(bytes: number): string {
 /**
  * 格式化日期（带翻译支持）
  */
-export function formatDate(date: Date | string, t?: (key: string) => string): string {
+type TranslationFunction = (key: string, options?: { count?: number }) => string
+
+export function formatDate(date: Date | string, t?: TranslationFunction): string {
   const d = typeof date === 'string' ? new Date(date) : date;
 
   const now = new Date();

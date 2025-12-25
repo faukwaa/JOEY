@@ -11,12 +11,12 @@ import { LanguagesIcon, CheckIcon } from 'lucide-react'
 const languages = [
   { code: 'zh', name: '简体中文', nativeName: '简体中文' },
   { code: 'en', name: 'English', nativeName: 'English' }
-]
+] as const
 
 export function LanguageSwitcher() {
   const { i18n } = useTranslation()
 
-  const changeLanguage = (langCode: string) => {
+  const changeLanguage = (langCode: 'zh' | 'en') => {
     i18n.changeLanguage(langCode)
     localStorage.setItem('language', langCode)
     window.electronAPI?.saveUserSettings?.({ language: langCode })

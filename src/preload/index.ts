@@ -29,7 +29,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getProjectStats: (projectPath: string) => ipcRenderer.invoke('get-project-stats', projectPath),
   // User settings APIs
   getUserSettings: () => ipcRenderer.invoke('get-user-settings'),
-  saveUserSettings: (settings: { theme?: 'light' | 'dark' | 'system' }) => ipcRenderer.invoke('save-user-settings', settings),
+  saveUserSettings: (settings: { theme?: 'light' | 'dark' | 'system'; language?: 'en' | 'zh' }) => ipcRenderer.invoke('save-user-settings', settings),
   saveProjectsCache: (projects: unknown[], folders: string[], scannedDirs?: string[], folder?: string, favorites?: string[], scannedDirsMap?: Record<string, string[]>) => ipcRenderer.invoke('save-projects-cache', projects, folders, scannedDirs, folder, favorites, scannedDirsMap),
   // 项目操作 APIs
   deleteNodeModules: (projectPath: string) => ipcRenderer.invoke('delete-node-modules', projectPath),
@@ -41,7 +41,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   windowClose: () => ipcRenderer.invoke('window-close'),
   windowIsMaximized: () => ipcRenderer.invoke('window-is-maximized'),
   // 扫描进度监听
-  onScanProgress: (callback) => {
+  onScanProgress: (callback: (progress: { stage: string; current: number; total: number; message: string }) => void) => {
     const handler = (_: unknown, progress: { stage: string; current: number; total: number; message: string }) => {
       callback(progress)
     }
@@ -77,8 +77,8 @@ declare global {
         createdAt: string
         updatedAt: string
       }>
-      getUserSettings: () => Promise<{ settings: { theme?: 'light' | 'dark' | 'system' } }>
-      saveUserSettings: (settings: { theme?: 'light' | 'dark' | 'system' }) => Promise<{ success: boolean; error?: string }>
+      getUserSettings: () => Promise<{ settings: { theme?: 'light' | 'dark' | 'system'; language?: 'en' | 'zh' } }>
+      saveUserSettings: (settings: { theme?: 'light' | 'dark' | 'system'; language?: 'en' | 'zh' }) => Promise<{ success: boolean; error?: string }>
       saveProjectsCache: (projects: unknown[], folders: string[], scannedDirs?: string[], folder?: string, favorites?: string[], scannedDirsMap?: Record<string, string[]>) => Promise<{ success: boolean; error?: string }>
       deleteNodeModules: (projectPath: string) => Promise<{ success: boolean; error?: string }>
       deleteProjectFromDisk: (projectPath: string) => Promise<{ success: boolean; error?: string }>
