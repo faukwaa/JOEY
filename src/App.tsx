@@ -134,23 +134,21 @@ export function App() {
         onProjectSelect={handleProjectSelect}
       />
       <SidebarInset>
-        <div className="flex flex-1 flex-col">
-          <ProjectListPage
-            allProjects={allProjects}
-            setAllProjects={setAllProjects}
-            currentFolderProjects={currentFolderProjects}
-            currentScanFolder={currentScanFolderForOps}
-            folderName={folderName}
-            rootFolderName={rootFolderName}
-            loading={loading}
-            getCurrentScanState={getCurrentScanState}
-            startScan={startScan}
-            stopScan={stopScan}
-            loadProjects={loadProjects}
-            setInitialProjects={setInitialProjects}
-            highlightedProjectId={highlightedProjectId}
-          />
-        </div>
+        <ProjectListPage
+          allProjects={allProjects}
+          setAllProjects={setAllProjects}
+          currentFolderProjects={currentFolderProjects}
+          currentScanFolder={currentScanFolderForOps}
+          folderName={folderName}
+          rootFolderName={rootFolderName}
+          loading={loading}
+          getCurrentScanState={getCurrentScanState}
+          startScan={startScan}
+          stopScan={stopScan}
+          loadProjects={loadProjects}
+          setInitialProjects={setInitialProjects}
+          highlightedProjectId={highlightedProjectId}
+        />
       </SidebarInset>
     </SidebarProvider>
   )

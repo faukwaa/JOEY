@@ -240,8 +240,8 @@ export function ProjectListPage({
       </div>
 
       {/* 统计信息 - 固定在底部 */}
-      {!loading && !currentScanState.scanning && currentFolderProjects.length > 0 && (
-        <div className="flex items-center justify-between px-4 py-2 text-sm text-muted-foreground border-t flex-shrink-0">
+      {currentFolderProjects.length > 0 && (
+        <div className="flex items-center justify-between px-4 py-2 text-sm text-muted-foreground border-t shrink-0">
           <span>
             共 <span className="font-semibold text-foreground">{currentFolderProjects.length}</span> 个项目
           </span>
