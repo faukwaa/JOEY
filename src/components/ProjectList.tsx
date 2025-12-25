@@ -23,7 +23,6 @@ import {
   StarOffIcon,
   GitBranchIcon,
   DeleteIcon,
-  ChevronRightIcon,
 } from 'lucide-react'
 import { Icon } from '@iconify/react'
 import { formatSize, formatDate } from '@/lib/format'
@@ -205,7 +204,6 @@ export function ProjectListItem({
                 <DropdownMenuSubTrigger>
                   <FolderOpenIcon className="mr-2 h-4 w-4" />
                   打开方式
-                  <ChevronRightIcon className="ml-auto h-4 w-4" />
                 </DropdownMenuSubTrigger>
                 <DropdownMenuSubContent>
                   <DropdownMenuItem onClick={() => onOpen?.(project)}>
@@ -217,7 +215,7 @@ export function ProjectListItem({
                     终端
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onOpenVSCode?.(project)}>
-                    <Icon icon="vscode:file-type-code" className="mr-2 h-4 w-4" />
+                    <Icon icon="logos:visual-studio-code" className="mr-2 h-4 w-4" />
                     VSCode
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onOpenQoder?.(project)}>
