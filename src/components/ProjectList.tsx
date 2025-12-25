@@ -97,78 +97,68 @@ export function ProjectListItem({
   return (
     <div
       className={cn(
-        "group relative rounded-lg px-4 py-3 transition-all duration-200 hover:bg-accent/50 cursor-pointer border-b border-border last:border-0",
+        "group relative rounded-lg px-3 py-2 transition-all duration-200 hover:bg-accent/50 cursor-pointer border-b border-border last:border-0",
         "bg-muted/30 hover:bg-muted/50"
       )}
     >
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         {/* 图标和名称 */}
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
-            <Icon icon={icon} className="w-7 h-7" />
+        <div className="flex items-center gap-2 flex-1 min-w-0 max-w-[30%]">
+          <div className="flex-shrink-0">
+            <Icon icon={icon} className="w-5 h-5" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-0.5">
+            <div className="flex items-center gap-1.5 mb-0.5">
               <h3 className="text-sm font-semibold truncate">{project.name}</h3>
               {project.favorite && (
-                <StarIcon className="h-3.5 w-3.5 shrink-0 fill-yellow-400 text-yellow-400" />
+                <StarIcon className="h-3 w-3 shrink-0 fill-yellow-400 text-yellow-400" />
               )}
             </div>
-            <p className="text-xs text-muted-foreground truncate">{project.path}</p>
+            <p className="text-[11px] text-muted-foreground truncate">{project.path}</p>
           </div>
         </div>
 
-        {/* 徽章标签 */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+        {/* 徽章标签 - 限制显示数量 */}
+        <div className="flex items-center gap-1.5 flex-shrink-0 max-w-[40%]">
           {project.gitBranch && (
-            <Badge variant="secondary" className="text-xs h-6 px-2">
-              <GitBranchIcon className="mr-1 h-3 w-3" />
+            <Badge variant="secondary" className="text-[10px] h-5 px-1.5 whitespace-nowrap">
+              <GitBranchIcon className="mr-0.5 h-2.5 w-2.5" />
               {project.gitBranch}
             </Badge>
           )}
 
           {project.gitStatus === 'modified' && (
-            <Badge variant="secondary" className="text-xs h-6 px-2 border-orange-500/30 text-orange-600 bg-orange-50 dark:bg-orange-950/30 dark:text-orange-400">
-              {project.gitChanges} 变更
+            <Badge variant="secondary" className="text-[10px] h-5 px-1.5 border-orange-500/30 text-orange-600 bg-orange-50 dark:bg-orange-950/30 dark:text-orange-400 whitespace-nowrap">
+              {project.gitChanges}
             </Badge>
           )}
 
           {project.packageManager && (
-            <Badge variant="secondary" className="text-xs h-6 px-2">
+            <Badge variant="secondary" className="text-[10px] h-5 px-1.5 whitespace-nowrap">
               {project.packageManager}
             </Badge>
           )}
 
-          <Badge variant="secondary" className="text-xs h-6 px-2">
+          <Badge variant="secondary" className="text-[10px] h-5 px-1.5 whitespace-nowrap">
             {formatSize(project.size)}
           </Badge>
         </div>
 
-        {/* 时间信息 */}
-        <div className="flex-shrink-0 text-xs text-muted-foreground text-right min-w-[100px]">
-          <div>{formatDate(project.updatedAt)}</div>
+        {/* 时间信息 - 更紧凑 */}
+        <div className="flex-shrink-0 text-[10px] text-muted-foreground text-right min-w-[70px] hidden sm:block">
+          {formatDate(project.updatedAt)}
         </div>
 
-        {/* 操作按钮 */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={() => onRefresh?.(project)}
-            title="刷新"
-          >
-            <RefreshCwIcon className="h-4 w-4" />
-          </Button>
-
+        {/* 操作按钮 - 更紧凑 */}
+        <div className="flex items-center gap-1 flex-shrink-0">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
+                className="h-7 w-7"
               >
-                <MoreHorizontalIcon className="h-4 w-4" />
+                <MoreHorizontalIcon className="h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
