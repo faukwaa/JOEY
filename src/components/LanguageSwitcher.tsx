@@ -16,21 +16,17 @@ const languages = [
 export function LanguageSwitcher() {
   const { i18n } = useTranslation()
 
-  const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[1]
-
   const changeLanguage = (langCode: string) => {
     i18n.changeLanguage(langCode)
     localStorage.setItem('language', langCode)
-    // 通知主进程保存语言设置
     window.electronAPI?.saveUserSettings?.({ language: langCode })
   }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-2">
+        <Button variant="ghost" size="icon" className="h-8 w-8">
           <LanguagesIcon className="h-4 w-4" />
-          <span className="hidden md:inline">{currentLanguage.nativeName}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
