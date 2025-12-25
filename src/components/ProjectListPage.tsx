@@ -187,9 +187,9 @@ export function ProjectListPage({
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4">
+    <div className="flex flex-1 flex-col gap-4 p-4 h-full">
       {/* 控制栏 */}
-      <div className="flex items-center justify-end">
+      <div className="flex items-center justify-end flex-shrink-0">
         <ProjectControls
           sortBy={sortBy}
           sortOrder={sortOrder}
@@ -200,29 +200,29 @@ export function ProjectListPage({
         />
       </div>
 
-      {/* 项目列表 */}
-      {loading ? (
-        <div className="flex items-center justify-center flex-1">
-          <div className="text-muted-foreground">加载中...</div>
-        </div>
-      ) : currentScanState.scanning ? (
-        // 扫描中，显示进度条（即使有旧项目也显示进度）
-        <EmptyProjectState
-          currentFolder={folderName}
-          scanningFolderName={rootFolderName}
-          isScanning={true}
-          scanProgress={currentScanState.progress}
-          onScan={handleScanAll}
-        />
-      ) : currentFolderProjects.length === 0 ? (
-        <EmptyProjectState
-          currentFolder={folderName}
-          isScanning={false}
-          scanProgress={currentScanState.progress}
-          onScan={handleScanAll}
-        />
-      ) : (
-        <div className="flex-1 overflow-auto">
+      {/* 项目列表区域 */}
+      <div className="flex-1 overflow-auto min-h-0">
+        {loading ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-muted-foreground">加载中...</div>
+          </div>
+        ) : currentScanState.scanning ? (
+          // 扫描中，显示进度条（即使有旧项目也显示进度）
+          <EmptyProjectState
+            currentFolder={folderName}
+            scanningFolderName={rootFolderName}
+            isScanning={true}
+            scanProgress={currentScanState.progress}
+            onScan={handleScanAll}
+          />
+        ) : currentFolderProjects.length === 0 ? (
+          <EmptyProjectState
+            currentFolder={folderName}
+            isScanning={false}
+            scanProgress={currentScanState.progress}
+            onScan={handleScanAll}
+          />
+        ) : (
           <ProjectList
             projects={sortedProjects}
             onOpen={handleOpenProject}
@@ -236,12 +236,12 @@ export function ProjectListPage({
             onDeleteNodeModules={handleDeleteNodeModulesAndUpdate}
             highlightedProjectId={highlightedProjectId}
           />
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* 统计信息 */}
+      {/* 统计信息 - 固定在底部 */}
       {!loading && !currentScanState.scanning && currentFolderProjects.length > 0 && (
-        <div className="flex items-center justify-between px-4 py-2 text-sm text-muted-foreground border-t">
+        <div className="flex items-center justify-between px-4 py-2 text-sm text-muted-foreground border-t flex-shrink-0">
           <span>
             共 <span className="font-semibold text-foreground">{currentFolderProjects.length}</span> 个项目
           </span>
