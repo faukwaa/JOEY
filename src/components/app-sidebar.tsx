@@ -29,7 +29,7 @@ export function AppSidebar({ scannedDirs, projectPaths, allProjects, onPathSelec
             <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold text-sm shadow-sm">
               J
             </div>
-            <span className="text-lg font-semibold">Joey</span>
+            <span className="text-xl font-bold tracking-tight">Joey</span>
           </div>
           <ThemeToggle />
         </div>
