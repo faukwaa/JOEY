@@ -29,7 +29,7 @@ export function AppSidebar({ scannedDirs, projectPaths, allProjects, onPathSelec
             <img
               src="/joey-logo.png"
               alt="Joey Logo"
-              className="w-14 h-14 rounded-lg object-cover shadow-sm"
+              className="w-20 h-20 rounded-lg object-cover shadow-sm"
             />
           </div>
           <ThemeToggle />
