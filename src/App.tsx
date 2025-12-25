@@ -114,12 +114,27 @@ export function App() {
     [allProjects]
   )
 
+  // 处理收藏项目选择
+  const handleProjectSelect = useCallback((project: Project) => {
+    // 找到项目所在的扫描目录
+    const scanFolder = Array.from(folderScannedDirs.keys()).find(folder =>
+      project.path.startsWith(folder + "/") || project.path === folder
+    )
+
+    if (scanFolder) {
+      // 选择该扫描目录
+      handlePathSelect(scanFolder)
+    }
+  }, [folderScannedDirs, handlePathSelect])
+
   return (
     <SidebarProvider>
       <AppSidebar
         scannedDirs={currentScannedDirs}
         projectPaths={allProjectPaths}
+        allProjects={allProjects}
         onPathSelect={handlePathSelect}
+        onProjectSelect={handleProjectSelect}
       />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">

@@ -1,4 +1,5 @@
 import { NavScan } from "@/components/nav-scan"
+import { NavFavorites } from "@/components/nav-favorites"
 import {
   Sidebar,
   SidebarContent,
@@ -6,14 +7,17 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import { FolderOpenIcon } from "lucide-react"
+import type { Project } from "@/types"
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   scannedDirs: string[]
   projectPaths: string[]
+  allProjects: Project[]
   onPathSelect: (path: string) => void
+  onProjectSelect: (project: Project) => void
 }
 
-export function AppSidebar({ scannedDirs, projectPaths, onPathSelect, ...props }: AppSidebarProps) {
+export function AppSidebar({ scannedDirs, projectPaths, allProjects, onPathSelect, onProjectSelect, ...props }: AppSidebarProps) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -23,6 +27,10 @@ export function AppSidebar({ scannedDirs, projectPaths, onPathSelect, ...props }
         </div>
       </SidebarHeader>
       <SidebarContent>
+        <NavFavorites
+          projects={allProjects}
+          onProjectSelect={onProjectSelect}
+        />
         <NavScan
           scannedDirs={scannedDirs}
           projectPaths={projectPaths}
