@@ -104,70 +104,62 @@ export function ProjectListItem({
       {/* 主布局：小屏幕竖向，大屏幕横向 */}
       <div className="flex flex-col sm:flex-row lg:flex-row items-start sm:items-center gap-2 lg:gap-3">
 
-        {/* 左侧：图标、名称、路径 */}
-        <div className="flex items-center gap-2 flex-1 min-w-0 w-full sm:w-auto">
-          <div className="flex-shrink-0">
-            <Icon icon={icon} className="w-5 h-5" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <h3 className="text-sm font-semibold truncate">{project.name}</h3>
-              {project.favorite && (
-                <StarIcon className="h-3 w-3 shrink-0 fill-yellow-400 text-yellow-400" />
-              )}
+        {/* 左侧：图标、名称、路径、时间 */}
+        <div className="flex flex-col gap-1 flex-1 min-w-0 w-full sm:w-auto">
+          <div className="flex items-center gap-2">
+            <div className="flex-shrink-0">
+              <Icon icon={icon} className="w-5 h-5" />
             </div>
-            <p className="text-[11px] text-muted-foreground truncate">{project.path}</p>
-          </div>
-        </div>
-
-        {/* 中间：徽章和时间 - 小屏幕在路径下方竖向排列 */}
-        <div className="flex flex-row sm:flex-col lg:flex-row items-start sm:items-center gap-1.5 sm:gap-1 flex-shrink-0 w-full sm:w-auto overflow-x-auto">
-
-          {/* 徽章标签 */}
-          <div className="flex items-center gap-1 flex-shrink-0 flex-wrap">
-            {project.gitBranch && (
-              <Badge variant="secondary" className="text-[10px] h-5 px-1.5 whitespace-nowrap">
-                <GitBranchIcon className="mr-0.5 h-2.5 w-2.5" />
-                {project.gitBranch}
-              </Badge>
-            )}
-
-            {project.gitStatus === 'modified' && (
-              <Badge variant="secondary" className="text-[10px] h-5 px-1.5 border-orange-500/30 text-orange-600 bg-orange-50 dark:bg-orange-950/30 dark:text-orange-400 whitespace-nowrap">
-                {project.gitChanges}
-              </Badge>
-            )}
-
-            {project.hasNodeModules && (
-              <Badge variant="secondary" className="text-[10px] h-5 px-1.5 whitespace-nowrap">
-                node_modules
-              </Badge>
-            )}
-
-            {project.packageManager && (
-              <Badge variant="secondary" className="text-[10px] h-5 px-1.5 whitespace-nowrap">
-                {project.packageManager}
-              </Badge>
-            )}
-
-            <Badge variant="secondary" className="text-[10px] h-5 px-1.5 whitespace-nowrap">
-              {formatSize(project.size)}
-            </Badge>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <h3 className="text-sm font-semibold truncate">{project.name}</h3>
+                {project.favorite && (
+                  <StarIcon className="h-3 w-3 shrink-0 fill-yellow-400 text-yellow-400" />
+                )}
+              </div>
+              <p className="text-[11px] text-muted-foreground truncate">{project.path}</p>
+            </div>
           </div>
 
           {/* 时间信息 */}
-          <div className="text-[10px] text-muted-foreground min-w-[100px] sm:text-right">
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-1 sm:justify-end">
-                <span className="opacity-70 sm:hidden">创建:</span>
-                <span className="font-medium">{formatDate(project.createdAt)}</span>
-              </div>
-              <div className="flex items-center gap-1 sm:justify-end">
-                <span className="opacity-70 sm:hidden">更新:</span>
-                <span className="font-medium">{formatDate(project.updatedAt)}</span>
-              </div>
+          <div className="text-[10px] text-muted-foreground pl-7">
+            <div className="flex items-center gap-3">
+              <span>创建: {formatDate(project.createdAt)}</span>
+              <span>更新: {formatDate(project.updatedAt)}</span>
             </div>
           </div>
+        </div>
+
+        {/* 中间：徽章标签 */}
+        <div className="flex items-center gap-1 flex-shrink-0 flex-wrap">
+          {project.gitBranch && (
+            <Badge variant="secondary" className="text-[10px] h-5 px-1.5 whitespace-nowrap">
+              <GitBranchIcon className="mr-0.5 h-2.5 w-2.5" />
+              {project.gitBranch}
+            </Badge>
+          )}
+
+          {project.gitStatus === 'modified' && (
+            <Badge variant="secondary" className="text-[10px] h-5 px-1.5 border-orange-500/30 text-orange-600 bg-orange-50 dark:bg-orange-950/30 dark:text-orange-400 whitespace-nowrap">
+              {project.gitChanges}
+            </Badge>
+          )}
+
+          {project.hasNodeModules && (
+            <Badge variant="secondary" className="text-[10px] h-5 px-1.5 whitespace-nowrap">
+              node_modules
+            </Badge>
+          )}
+
+          {project.packageManager && (
+            <Badge variant="secondary" className="text-[10px] h-5 px-1.5 whitespace-nowrap">
+              {project.packageManager}
+            </Badge>
+          )}
+
+          <Badge variant="secondary" className="text-[10px] h-5 px-1.5 whitespace-nowrap">
+            {formatSize(project.size)}
+          </Badge>
         </div>
 
         {/* 右侧：操作按钮 - 始终在最右边 */}
