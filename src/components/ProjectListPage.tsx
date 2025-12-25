@@ -187,9 +187,9 @@ export function ProjectListPage({
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 h-full">
-      {/* 控制栏 */}
-      <div className="flex items-center justify-end flex-shrink-0">
+    <div className="flex flex-1 flex-col h-full overflow-hidden">
+      {/* 控制栏 - 固定顶部，半透明模糊 */}
+      <div className="flex items-center justify-end px-4 py-3 bg-background/80 backdrop-blur-sm border-b shrink-0">
         <ProjectControls
           sortBy={sortBy}
           sortOrder={sortOrder}
@@ -200,8 +200,8 @@ export function ProjectListPage({
         />
       </div>
 
-      {/* 项目列表区域 */}
-      <div className="flex-1 overflow-auto min-h-0">
+      {/* 项目列表区域 - 可滚动 */}
+      <div className="flex-1 overflow-auto px-4 py-4">
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-muted-foreground">加载中...</div>
@@ -239,9 +239,9 @@ export function ProjectListPage({
         )}
       </div>
 
-      {/* 统计信息 - 固定在底部 */}
+      {/* 统计信息 - 固定底部，半透明模糊 */}
       {currentFolderProjects.length > 0 && (
-        <div className="flex items-center justify-between px-4 py-2 text-sm text-muted-foreground border-t shrink-0">
+        <div className="flex items-center justify-between px-4 py-3 text-sm text-muted-foreground bg-background/80 backdrop-blur-sm border-t shrink-0">
           <span>
             共 <span className="font-semibold text-foreground">{currentFolderProjects.length}</span> 个项目
           </span>
