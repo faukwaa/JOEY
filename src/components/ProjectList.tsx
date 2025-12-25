@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { Project } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -40,6 +40,7 @@ interface ProjectListProps {
   onDeleteFromDisk?: (project: Project) => void
   onToggleFavorite?: (project: Project) => void
   onDeleteNodeModules?: (project: Project) => void
+  highlightedProjectId?: string
 }
 
 // 项目类型检测和图标配置
@@ -102,6 +103,7 @@ export function ProjectListItem({
   onDeleteFromDisk,
   onToggleFavorite,
   onDeleteNodeModules,
+  isHighlighted,
 }: {
   project: Project
   onOpen?: (project: Project) => void
@@ -113,17 +115,28 @@ export function ProjectListItem({
   onDeleteFromDisk?: (project: Project) => void
   onToggleFavorite?: (project: Project) => void
   onDeleteNodeModules?: (project: Project) => void
+  isHighlighted?: boolean
 }) {
   const icon = detectProjectType(project)
   const [showDeleteFromListConfirm, setShowDeleteFromListConfirm] = useState(false)
   const [showDeleteFromDiskConfirm, setShowDeleteFromDiskConfirm] = useState(false)
   const [showDeleteNodeModulesConfirm, setShowDeleteNodeModulesConfirm] = useState(false)
+  const itemRef = useRef<HTMLDivElement>(null)
+
+  // 滚动到高亮项目
+  useEffect(() => {
+    if (isHighlighted && itemRef.current) {
+      itemRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }, [isHighlighted])
 
   return (
     <div
+      ref={itemRef}
       className={cn(
         "group relative rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-accent/50 cursor-pointer",
-        "bg-muted/30 hover:bg-muted/50 mb-2"
+        "bg-muted/30 hover:bg-muted/50 mb-2",
+        isHighlighted && "ring-2 ring-primary ring-offset-2 ring-offset-background animate-in fade-in duration-300"
       )}
     >
       {/* 主布局：小屏幕竖向，大屏幕横向 */}
@@ -318,6 +331,7 @@ export function ProjectList({
   onDeleteFromDisk,
   onToggleFavorite,
   onDeleteNodeModules,
+  highlightedProjectId,
 }: ProjectListProps) {
   if (projects.length === 0) {
     return (
@@ -346,6 +360,7 @@ export function ProjectList({
           onDeleteFromDisk={onDeleteFromDisk}
           onToggleFavorite={onToggleFavorite}
           onDeleteNodeModules={onDeleteNodeModules}
+          isHighlighted={project.id === highlightedProjectId}
         />
       ))}
     </div>

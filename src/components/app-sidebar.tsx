@@ -27,14 +27,14 @@ export function AppSidebar({ scannedDirs, projectPaths, allProjects, onPathSelec
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <NavFavorites
-          projects={allProjects}
-          onProjectSelect={onProjectSelect}
-        />
         <NavScan
           scannedDirs={scannedDirs}
           projectPaths={projectPaths}
           onPathSelect={onPathSelect}
+        />
+        <NavFavorites
+          projects={allProjects}
+          onProjectSelect={onProjectSelect}
         />
       </SidebarContent>
       <SidebarRail />

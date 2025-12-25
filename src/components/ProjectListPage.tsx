@@ -19,6 +19,7 @@ interface ProjectListPageProps {
   stopScan: (folder: string) => void
   loadProjects: (onProjectsLoaded?: (projects: Project[]) => void, onScannedDirsLoaded?: (folder: string, dirs: string[]) => void) => Promise<void>
   setInitialProjects: (projects: Project[]) => void
+  highlightedProjectId?: string
 }
 
 export function ProjectListPage({
@@ -33,7 +34,8 @@ export function ProjectListPage({
   startScan,
   stopScan,
   loadProjects,
-  setInitialProjects
+  setInitialProjects,
+  highlightedProjectId
 }: ProjectListPageProps) {
   const [showStopConfirm, setShowStopConfirm] = useState(false)
   const [showRescanConfirm, setShowRescanConfirm] = useState(false)
@@ -232,6 +234,7 @@ export function ProjectListPage({
           onDeleteFromDisk={handleDeleteFromDiskAndUpdate}
           onToggleFavorite={handleToggleFavoriteWrapper}
           onDeleteNodeModules={handleDeleteNodeModulesAndUpdate}
+          highlightedProjectId={highlightedProjectId}
         />
       )}
 

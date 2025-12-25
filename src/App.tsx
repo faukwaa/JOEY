@@ -20,6 +20,7 @@ import { useProjectLoading } from "@/hooks/useProjectLoading"
 
 export function App() {
   const [selectedPath, setSelectedPath] = useState<string>("")
+  const [highlightedProjectId, setHighlightedProjectId] = useState<string>("")
 
   const { loading, loadProjects } = useProjectLoading()
   const {
@@ -124,6 +125,12 @@ export function App() {
     if (scanFolder) {
       // 选择该扫描目录
       handlePathSelect(scanFolder)
+      // 设置高亮项目
+      setHighlightedProjectId(project.id)
+      // 延迟清除高亮，以便用户能看到高亮效果
+      setTimeout(() => {
+        setHighlightedProjectId("")
+      }, 2000)
     }
   }, [folderScannedDirs, handlePathSelect])
 
@@ -173,6 +180,7 @@ export function App() {
             stopScan={stopScan}
             loadProjects={loadProjects}
             setInitialProjects={setInitialProjects}
+            highlightedProjectId={highlightedProjectId}
           />
         </div>
       </SidebarInset>
