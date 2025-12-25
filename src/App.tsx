@@ -22,7 +22,8 @@ export function App() {
     stopScan,
     setInitialProjects,
     getScannedDirs,
-    setScannedDirs
+    setScannedDirs,
+    saveFavorites
   } = useFolderScanning()
 
   // 加载项目列表和扫描目录
@@ -125,7 +126,7 @@ export function App() {
   }, [folderScannedDirs, handlePathSelect])
 
   return (
-    <SidebarProvider>
+    <SidebarProvider className="h-svh overflow-hidden">
       <AppSidebar
         scannedDirs={currentScannedDirs}
         projectPaths={allProjectPaths}
@@ -133,7 +134,7 @@ export function App() {
         onPathSelect={handlePathSelect}
         onProjectSelect={handleProjectSelect}
       />
-      <SidebarInset>
+      <SidebarInset className="h-full overflow-hidden">
         <ProjectListPage
           allProjects={allProjects}
           setAllProjects={setAllProjects}
@@ -147,6 +148,7 @@ export function App() {
           stopScan={stopScan}
           loadProjects={loadProjects}
           setInitialProjects={setInitialProjects}
+          saveFavorites={saveFavorites}
           highlightedProjectId={highlightedProjectId}
         />
       </SidebarInset>

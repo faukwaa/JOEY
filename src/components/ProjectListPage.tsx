@@ -20,6 +20,7 @@ interface ProjectListPageProps {
   stopScan: (folder: string) => void
   loadProjects: (onProjectsLoaded?: (projects: Project[]) => void, onScannedDirsLoaded?: (folder: string, dirs: string[]) => void) => Promise<void>
   setInitialProjects: (projects: Project[]) => void
+  saveFavorites: () => Promise<void>
   highlightedProjectId?: string
 }
 
@@ -36,6 +37,7 @@ export function ProjectListPage({
   stopScan,
   loadProjects,
   setInitialProjects,
+  saveFavorites,
   highlightedProjectId
 }: ProjectListPageProps) {
   const [showStopConfirm, setShowStopConfirm] = useState(false)
@@ -135,13 +137,15 @@ export function ProjectListPage({
   }, [loadProjects, setInitialProjects])
 
   // 处理项目操作
-  const handleToggleFavoriteWrapper = useCallback((project: Project) => {
+  const handleToggleFavoriteWrapper = useCallback(async (project: Project) => {
     handleToggleFavorite(project, (proj) => {
       setAllProjects(allProjects.map(p =>
         p.id === proj.id ? { ...p, favorite: !p.favorite } : p
       ))
     })
-  }, [allProjects, handleToggleFavorite, setAllProjects])
+    // 保存收藏状态到缓存
+    await saveFavorites()
+  }, [allProjects, handleToggleFavorite, setAllProjects, saveFavorites])
 
   // 处理停止扫描
   const handleStopScan = () => {

@@ -233,6 +233,52 @@ export function useFolderScanning() {
     })
   }, [])
 
+  // 保存收藏状态到缓存
+  const saveFavorites = useCallback(async () => {
+    try {
+      const foldersResult = await window.electronAPI.getScanFolders()
+      const folders = foldersResult.folders || []
+
+      // 序列化项目
+      const serializedProjects = allProjects.map(p => ({
+        name: p.name,
+        path: p.path,
+        scanFolder: p.scanFolder,
+        createdAt: p.createdAt.toISOString(),
+        updatedAt: p.updatedAt.toISOString(),
+        addedAt: p.addedAt.toISOString(),
+        size: p.size,
+        hasNodeModules: p.hasNodeModules,
+        gitBranch: p.gitBranch,
+        gitStatus: p.gitStatus,
+        gitChanges: p.gitChanges,
+        packageManager: p.packageManager,
+        favorite: p.favorite,
+      }))
+
+      // 提取收藏的项目 ID
+      const favorites = allProjects.filter(p => p.favorite).map(p => p.id)
+
+      // 将 folderScannedDirs 转换为对象格式
+      const scannedDirsMap: Record<string, string[]> = {}
+      folderScannedDirs.forEach((dirs, folder) => {
+        scannedDirsMap[folder] = dirs
+      })
+
+      await window.electronAPI.saveProjectsCache(
+        serializedProjects,
+        folders,
+        undefined, // scannedDirs 不再使用
+        undefined, // folder 不再使用
+        favorites,
+        scannedDirsMap
+      )
+      console.log('收藏状态已保存')
+    } catch (error) {
+      console.error('保存收藏失败:', error)
+    }
+  }, [allProjects, folderScannedDirs])
+
   return {
     allProjects,
     setAllProjects,
@@ -244,6 +290,7 @@ export function useFolderScanning() {
     stopScan,
     setInitialProjects,
     getScannedDirs,
-    setScannedDirs
+    setScannedDirs,
+    saveFavorites
   }
 }

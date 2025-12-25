@@ -103,7 +103,7 @@ type CacheData = {
   scannedAt: string
 }
 
-const saveProjectsCache = (projects: unknown[], folders: string[], scannedDirs?: string[], folder?: string, favorites?: string[]) => {
+const saveProjectsCache = (projects: unknown[], folders: string[], scannedDirs?: string[], folder?: string, favorites?: string[], scannedDirsMap?: Record<string, string[]>) => {
   try {
     const cachePath = getProjectsCachePath()
 
@@ -117,18 +117,21 @@ const saveProjectsCache = (projects: unknown[], folders: string[], scannedDirs?:
     }
 
     // 合并扫描目录映射
-    const scannedDirsMap: Record<string, string[]> = existingCache?.scannedDirsMap || {}
+    let finalScannedDirsMap: Record<string, string[]> = existingCache?.scannedDirsMap || {}
 
-    // 如果提供了 folder 和 scannedDirs，更新映射
-    if (folder && scannedDirs) {
-      scannedDirsMap[folder] = scannedDirs
+    // 如果直接提供了 scannedDirsMap，使用它
+    if (scannedDirsMap) {
+      finalScannedDirsMap = scannedDirsMap
+    } else if (folder && scannedDirs) {
+      // 否则，如果提供了 folder 和 scannedDirs，更新映射
+      finalScannedDirsMap[folder] = scannedDirs
     }
 
     const cache: CacheData = {
       projects,
       folders,
       scannedDirs: scannedDirs || [],  // 向后兼容
-      scannedDirsMap,
+      scannedDirsMap: finalScannedDirsMap,
       favorites,
       scannedAt: new Date().toISOString(),
     }
@@ -513,8 +516,8 @@ ipcMain.handle('remove-scan-folder', async (_, folder: string) => {
 })
 
 // 保存项目缓存（由前端调用）
-ipcMain.handle('save-projects-cache', async (_, projects: unknown[], folders: string[], scannedDirs?: string[], folder?: string, favorites?: string[]) => {
-  return saveProjectsCache(projects, folders, scannedDirs, folder, favorites)
+ipcMain.handle('save-projects-cache', async (_, projects: unknown[], folders: string[], scannedDirs?: string[], folder?: string, favorites?: string[], scannedDirsMap?: Record<string, string[]>) => {
+  return saveProjectsCache(projects, folders, scannedDirs, folder, favorites, scannedDirsMap)
 })
 
 // 获取项目统计信息
