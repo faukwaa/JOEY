@@ -24,17 +24,13 @@ export function AppSidebar({ scannedDirs, projectPaths, allProjects, onPathSelec
   return (
     <Sidebar collapsible="none" {...props}>
       <SidebarHeader className={isMacOS ? "pt-6" : "pt-2"}>
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between px-4 py-4">
+          <div className="flex items-center gap-3">
             <img
               src="/joey-logo.png"
               alt="Joey Logo"
-              className="w-8 h-8 rounded-lg object-cover shadow-sm"
+              className="w-14 h-14 rounded-lg object-cover shadow-sm"
             />
-            <span className="relative px-3 py-1 text-xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 animate-shine rounded-lg">
-              JOEY
-              <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-orange-500/20 via-amber-500/20 to-yellow-500/20 blur-xl" />
-            </span>
           </div>
           <ThemeToggle />
         </div>
