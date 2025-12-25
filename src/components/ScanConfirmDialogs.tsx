@@ -8,6 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { useTranslation } from 'react-i18next'
 
 interface ScanConfirmDialogsProps {
   showStopConfirm: boolean
@@ -30,41 +31,40 @@ export function ScanConfirmDialogs({
   onRescanConfirm,
   onRescanCancel
 }: ScanConfirmDialogsProps) {
+  const { t } = useTranslation()
   const folderName = currentFolder ? currentFolder.split('/').pop() : ''
 
   return (
     <>
-      {/* 停止扫描确认对话框 */}
       <AlertDialog open={showStopConfirm} onOpenChange={onStopCancel}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>确认停止扫描？</AlertDialogTitle>
+            <AlertDialogTitle>{t('scan.confirmStop')}</AlertDialogTitle>
             <AlertDialogDescription>
-              当前已扫描 {scanProgressCurrent} 个项目，停止后将保留这些已扫描的项目，未扫描的项目将被忽略。
+              {t('scan.confirmStopDesc', { count: scanProgressCurrent })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={onStopCancel}>取消</AlertDialogCancel>
+            <AlertDialogCancel onClick={onStopCancel}>{t('scan.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={onStopConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              确认停止
+              {t('scan.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* 重新扫描确认对话框 */}
       <AlertDialog open={showRescanConfirm} onOpenChange={onRescanCancel}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>确认重新扫描？</AlertDialogTitle>
+            <AlertDialogTitle>{t('scan.confirmRescan')}</AlertDialogTitle>
             <AlertDialogDescription>
-              重新扫描将清空当前项目列表并重新扫描 {folderName} 目录。此操作会覆盖之前的项目数据。
+              {t('scan.confirmRescanDesc', { name: folderName })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={onRescanCancel}>取消</AlertDialogCancel>
+            <AlertDialogCancel onClick={onRescanCancel}>{t('scan.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={onRescanConfirm}>
-              确认扫描
+              {t('scan.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

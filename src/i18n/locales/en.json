@@ -1,0 +1,67 @@
+{
+  "app": {
+    "name": "JOEY"
+  },
+  "nav": {
+    "applications": "Applications",
+    "projects": "Projects",
+    "more": "More",
+    "favorites": "Favorites",
+    "allProjects": "All Projects"
+  },
+  "scan": {
+    "addFolder": "Add Scan Folder",
+    "delete": "Delete",
+    "scanning": "Scanning",
+    "scanNow": "Scan Now",
+    "stopScan": "Stop Scan",
+    "noProjectsFound": "No projects found in {{name}}",
+    "noProjectsYet": "No projects yet",
+    "selectFolder": "Select a scan folder on the left",
+    "scanInstruction": "Click \"Scan Now\" to scan the selected folder",
+    "scanningProgress": "Searching for projects, please wait...",
+    "confirmStop": "Confirm stop scan?",
+    "confirmStopDesc": "Currently scanned {{count}} projects. These will be preserved, unscanned projects will be ignored.",
+    "confirmRescan": "Confirm rescan?",
+    "confirmRescanDesc": "Rescanning will clear the current project list and rescan the {{name}} folder. This will overwrite previous project data.",
+    "cancel": "Cancel",
+    "confirm": "Confirm"
+  },
+  "project": {
+    "size": "Size",
+    "createdAt": "Created",
+    "updatedAt": "Updated",
+    "changes": "{{count}} changes",
+    "open": "Open",
+    "openInExplorer": "Open in File Explorer",
+    "openInTerminal": "Open in Terminal",
+    "refreshInfo": "Refresh Info",
+    "addFavorite": "Add to Favorites",
+    "removeFavorite": "Remove from Favorites",
+    "deleteProject": "Delete Project",
+    "deleteProjectConfirm": "Are you sure you want to delete this project? This will move the project folder to trash.",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "deleteNodeModules": "Delete node_modules",
+    "deleteNodeModulesConfirm": "Are you sure you want to delete node_modules? This will free up disk space.",
+    "emptyState": {
+      "title": "No projects yet",
+      "description": "Click \"Add Scan Folder\" button to select project folders to monitor."
+    }
+  },
+  "user": {
+    "upgradeToPro": "Upgrade to Pro",
+    "account": "Account",
+    "billing": "Billing",
+    "notifications": "Notifications",
+    "logout": "Logout"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System"
+  }
+}

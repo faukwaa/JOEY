@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { NavScan } from "@/components/nav-scan"
 import { NavFavorites } from "@/components/nav-favorites"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 import {
   Sidebar,
   SidebarContent,
@@ -32,7 +33,10 @@ export function AppSidebar({ scannedDirs, projectPaths, allProjects, onPathSelec
               className="w-20 h-20 rounded-lg object-cover shadow-sm"
             />
           </div>
-          <ThemeToggle />
+          <div className="flex items-center gap-1">
+            <LanguageSwitcher />
+            <ThemeToggle />
+          </div>
         </div>
       </SidebarHeader>
       <SidebarContent>

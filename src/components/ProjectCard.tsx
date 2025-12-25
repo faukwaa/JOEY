@@ -19,6 +19,7 @@ import {
   DatabaseIcon,
   GitBranchIcon,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { formatSize, formatDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
@@ -56,6 +57,7 @@ export function ProjectCard({
   onDelete,
   onToggleFavorite,
 }: ProjectCardProps) {
+  const { t } = useTranslation()
   const colorClass = getProjectColor(project.name)
 
   return (
@@ -93,26 +95,26 @@ export function ProjectCard({
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem onClick={() => onOpen?.(project)}>
               <FolderOpenIcon className="mr-2 h-4 w-4" />
-              在文件管理器中打开
+              {t('project.openInExplorer')}
             </DropdownMenuItem>
             <DropdownMenuItem>
               <TerminalIcon className="mr-2 h-4 w-4" />
-              在终端中打开
+              {t('project.openInTerminal')}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onRefresh?.(project)}>
               <RefreshCwIcon className="mr-2 h-4 w-4" />
-              刷新信息
+              {t('project.refreshInfo')}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onToggleFavorite?.(project)}>
               {project.favorite ? (
                 <>
                   <StarOffIcon className="mr-2 h-4 w-4" />
-                  取消收藏
+                  {t('project.removeFavorite')}
                 </>
               ) : (
                 <>
                   <StarIcon className="mr-2 h-4 w-4" />
-                  添加收藏
+                  {t('project.addFavorite')}
                 </>
               )}
             </DropdownMenuItem>
@@ -122,7 +124,7 @@ export function ProjectCard({
               className="text-destructive focus:text-destructive"
             >
               <Trash2Icon className="mr-2 h-4 w-4" />
-              删除项目
+              {t('project.deleteProject')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -150,7 +152,7 @@ export function ProjectCard({
 
         {project.gitStatus === 'modified' && (
           <Badge variant="secondary" className="text-xs border-orange-500/30 text-orange-600 bg-orange-50 dark:bg-orange-950/30 dark:text-orange-400">
-            {project.gitChanges} 个变更
+            {t('project.changes', { count: project.gitChanges })}
           </Badge>
         )}
 
@@ -164,11 +166,11 @@ export function ProjectCard({
       {/* 时间信息 */}
       <div className="text-xs text-muted-foreground space-y-1 mb-3">
         <div className="flex items-center justify-between">
-          <span>创建于</span>
+          <span>{t('project.createdAt')}</span>
           <span className="font-medium">{formatDate(project.createdAt)}</span>
         </div>
         <div className="flex items-center justify-between">
-          <span>更新于</span>
+          <span>{t('project.updatedAt')}</span>
           <span className="font-medium">{formatDate(project.updatedAt)}</span>
         </div>
       </div>
@@ -177,7 +179,7 @@ export function ProjectCard({
       <div className="flex gap-2">
         <Button variant="outline" size="sm" onClick={() => onOpen?.(project)} className="flex-1">
           <FolderOpenIcon className="mr-2 h-4 w-4" />
-          打开
+          {t('project.open')}
         </Button>
         <Button variant="outline" size="sm" onClick={() => onRefresh?.(project)}>
           <RefreshCwIcon className="h-4 w-4" />
@@ -202,13 +204,15 @@ export function ProjectGrid({
   onDelete,
   onToggleFavorite,
 }: ProjectGridProps) {
+  const { t } = useTranslation()
+
   if (projects.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center p-12">
         <FolderOpenIcon className="h-16 w-16 text-muted-foreground mb-4" />
-        <h3 className="text-lg font-semibold mb-2">还没有项目</h3>
+        <h3 className="text-lg font-semibold mb-2">{t('project.emptyState.title')}</h3>
         <p className="text-sm text-muted-foreground max-w-md">
-          点击左侧的"添加扫描目录"按钮，选择要监控的项目文件夹。
+          {t('project.emptyState.description')}
         </p>
       </div>
     )

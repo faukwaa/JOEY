@@ -1,5 +1,6 @@
 import { FolderIcon, Trash2Icon, PlusIcon, ChevronRightIcon } from "lucide-react"
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
+import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
 import {
   SidebarGroup,
@@ -21,6 +22,7 @@ interface NavScanProps {
 }
 
 export function NavScan({ scannedDirs, projectPaths, onPathSelect }: NavScanProps) {
+  const { t } = useTranslation()
   const [scanFolders, setScanFolders] = useState<string[]>([])
   const [selectedPath, setSelectedPath] = useState<string>("")
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
@@ -150,7 +152,7 @@ export function NavScan({ scannedDirs, projectPaths, onPathSelect }: NavScanProp
               onClick={handleAddFolder}
             >
               <PlusIcon className="h-4 w-4 mr-2" />
-              添加扫描目录
+              {t('scan.addFolder')}
             </Button>
           </div>
 
@@ -254,7 +256,7 @@ export function NavScan({ scannedDirs, projectPaths, onPathSelect }: NavScanProp
                                 e.stopPropagation()
                                 handleRemoveFolder(folder)
                               }}
-                              title="删除"
+                              title={t('scan.delete')}
                             >
                               <Trash2Icon className="h-3 w-3" />
                             </Button>

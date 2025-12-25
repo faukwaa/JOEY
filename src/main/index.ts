@@ -77,6 +77,7 @@ const getUserSettingsPath = () => {
 // 用户设置类型
 interface UserSettings {
   theme?: 'light' | 'dark' | 'system'
+  language?: 'en' | 'zh'
 }
 
 // 获取用户设置

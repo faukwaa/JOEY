@@ -1,0 +1,67 @@
+{
+  "app": {
+    "name": "JOEY"
+  },
+  "nav": {
+    "applications": "应用",
+    "projects": "项目",
+    "more": "更多",
+    "favorites": "收藏",
+    "allProjects": "所有项目"
+  },
+  "scan": {
+    "addFolder": "添加扫描目录",
+    "delete": "删除",
+    "scanning": "扫描中",
+    "scanNow": "立即扫描",
+    "stopScan": "停止扫描",
+    "noProjectsFound": "{{name}} 没有找到项目",
+    "noProjectsYet": "还没有项目",
+    "selectFolder": "在左侧选择一个扫描目录",
+    "scanInstruction": "点击"立即扫描"按钮扫描当前选中的目录",
+    "scanningProgress": "正在搜索项目，请稍候...",
+    "confirmStop": "确认停止扫描？",
+    "confirmStopDesc": "当前已扫描 {{count}} 个项目，停止后将保留这些已扫描的项目，未扫描的项目将被忽略。",
+    "confirmRescan": "确认重新扫描？",
+    "confirmRescanDesc": "重新扫描将清空当前项目列表并重新扫描 {{name}} 目录。此操作会覆盖之前的项目数据。",
+    "cancel": "取消",
+    "confirm": "确认"
+  },
+  "project": {
+    "size": "大小",
+    "createdAt": "创建于",
+    "updatedAt": "更新于",
+    "changes": "{{count}} 个变更",
+    "open": "打开",
+    "openInExplorer": "在文件管理器中打开",
+    "openInTerminal": "在终端中打开",
+    "refreshInfo": "刷新信息",
+    "addFavorite": "添加收藏",
+    "removeFavorite": "取消收藏",
+    "deleteProject": "删除项目",
+    "deleteProjectConfirm": "确定要删除这个项目吗？这将把项目文件夹移至回收站。",
+    "delete": "删除",
+    "cancel": "取消",
+    "deleteNodeModules": "删除 node_modules",
+    "deleteNodeModulesConfirm": "确定要删除 node_modules 吗？这将释放磁盘空间。",
+    "emptyState": {
+      "title": "还没有项目",
+      "description": "点击左侧的"添加扫描目录"按钮，选择要监控的项目文件夹。"
+    }
+  },
+  "user": {
+    "upgradeToPro": "升级到 Pro",
+    "account": "账户",
+    "billing": "计费",
+    "notifications": "通知",
+    "logout": "退出登录"
+  },
+  "settings": {
+    "title": "设置",
+    "language": "语言",
+    "theme": "主题",
+    "themeLight": "浅色",
+    "themeDark": "深色",
+    "themeSystem": "跟随系统"
+  }
+}

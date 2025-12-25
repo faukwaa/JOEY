@@ -1,9 +1,10 @@
 import { RefreshCwIcon } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 
 interface EmptyProjectStateProps {
   currentFolder: string
-  scanningFolderName?: string  // 正在扫描的目录名（用于显示扫描状态）
+  scanningFolderName?: string
   isScanning: boolean
   scanProgress: { stage: string; current: number; total: number; message: string }
   onScan: () => void
@@ -16,7 +17,7 @@ export function EmptyProjectState({
   scanProgress,
   onScan
 }: EmptyProjectStateProps) {
-  // 如果正在扫描，使用扫描目录名；否则使用当前选中的目录名
+  const { t } = useTranslation()
   const displayFolderName = isScanning && scanningFolderName ? scanningFolderName : (currentFolder ? currentFolder.split('/').pop() : '')
   const folderName = currentFolder ? currentFolder.split('/').pop() : ''
 
@@ -24,26 +25,25 @@ export function EmptyProjectState({
     <div className="flex flex-col items-center justify-center h-full text-center p-12">
       <h3 className="text-lg font-semibold mb-2">
         {isScanning
-          ? `正在扫描 ${displayFolderName} 目录`
+          ? `${t('scan.scanning')} ${displayFolderName}`
           : folderName
-            ? `${folderName} 没有找到项目`
-            : '还没有项目'
+            ? t('scan.noProjectsFound', { name: folderName })
+            : t('scan.noProjectsYet')
         }
       </h3>
       <p className="text-sm text-muted-foreground max-w-md mb-4">
         {isScanning
-          ? '正在搜索项目，请稍候...'
+          ? t('scan.scanningProgress')
           : currentFolder
-            ? '点击"立即扫描"按钮扫描当前选中的目录'
-            : '在左侧选择一个扫描目录'
+            ? t('scan.scanInstruction')
+            : t('scan.selectFolder')
         }
       </p>
 
-      {/* 进度条 */}
       {isScanning && (
         <div className="flex flex-col gap-2 w-full max-w-md mb-4 animate-in fade-in duration-500">
           <div className="text-sm text-muted-foreground">
-            {scanProgress.message || '扫描中...'}
+            {scanProgress.message || t('scan.scanning')}
             {scanProgress.total > 0 && (
               <span> ({scanProgress.current}/{scanProgress.total})</span>
             )}
@@ -66,12 +66,12 @@ export function EmptyProjectState({
           {isScanning ? (
             <>
               <RefreshCwIcon className="h-4 w-4 mr-2 animate-spin" />
-              停止扫描
+              {t('scan.stopScan')}
             </>
           ) : (
             <>
               <RefreshCwIcon className="h-4 w-4 mr-2" />
-              立即扫描
+              {t('scan.scanNow')}
             </>
           )}
         </Button>

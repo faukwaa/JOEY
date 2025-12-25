@@ -1,4 +1,5 @@
 import { StarIcon } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -15,6 +16,7 @@ interface NavFavoritesProps {
 }
 
 export function NavFavorites({ projects, onProjectSelect }: NavFavoritesProps) {
+  const { t } = useTranslation()
   const favoriteProjects = projects.filter(p => p.favorite)
 
   if (favoriteProjects.length === 0) {
@@ -23,7 +25,7 @@ export function NavFavorites({ projects, onProjectSelect }: NavFavoritesProps) {
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>收藏项目</SidebarGroupLabel>
+      <SidebarGroupLabel>{t('nav.favorites')}</SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
           {favoriteProjects.map((project) => (
