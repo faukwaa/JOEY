@@ -162,3 +162,21 @@
     scrollbar-color: var(--scrollbar-thumb) transparent;
   }
 }
+
+/* 光影动画 */
+@keyframes shine {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-shine {
+  background-size: 200% auto;
+  animation: shine 3s ease-in-out infinite;
+}

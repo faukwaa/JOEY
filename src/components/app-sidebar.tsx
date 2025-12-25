@@ -26,10 +26,13 @@ export function AppSidebar({ scannedDirs, projectPaths, allProjects, onPathSelec
       <SidebarHeader className={isMacOS ? "pt-6" : "pt-2"}>
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold text-sm shadow-sm">
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 text-white font-bold text-sm shadow-sm">
               J
             </div>
-            <span className="text-xl font-bold tracking-tight">Joey</span>
+            <span className="relative px-3 py-1 text-xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 animate-shine rounded-lg">
+              JOEY
+              <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-orange-500/20 via-amber-500/20 to-yellow-500/20 blur-xl" />
+            </span>
           </div>
           <ThemeToggle />
         </div>
