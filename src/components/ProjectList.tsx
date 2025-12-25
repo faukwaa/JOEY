@@ -97,13 +97,13 @@ export function ProjectListItem({
   return (
     <div
       className={cn(
-        "group relative rounded-lg px-3 py-2 transition-all duration-200 hover:bg-accent/50 cursor-pointer border-b border-border last:border-0",
-        "bg-muted/30 hover:bg-muted/50"
+        "group relative rounded-lg px-3 py-2 transition-all duration-200 hover:bg-accent/50 cursor-pointer",
+        "bg-muted/30 hover:bg-muted/50 mb-2"
       )}
     >
       <div className="flex items-center gap-3">
         {/* 图标和名称 */}
-        <div className="flex items-center gap-2 flex-1 min-w-0 max-w-[30%]">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
           <div className="flex-shrink-0">
             <Icon icon={icon} className="w-5 h-5" />
           </div>
@@ -119,7 +119,7 @@ export function ProjectListItem({
         </div>
 
         {/* 徽章标签 - 限制显示数量 */}
-        <div className="flex items-center gap-1.5 flex-shrink-0 max-w-[40%]">
+        <div className="flex items-center gap-1.5 flex-shrink-0">
           {project.gitBranch && (
             <Badge variant="secondary" className="text-[10px] h-5 px-1.5 whitespace-nowrap">
               <GitBranchIcon className="mr-0.5 h-2.5 w-2.5" />
@@ -149,8 +149,8 @@ export function ProjectListItem({
           {formatDate(project.updatedAt)}
         </div>
 
-        {/* 操作按钮 - 更紧凑 */}
-        <div className="flex items-center gap-1 flex-shrink-0">
+        {/* 操作按钮 - 放在最右边 */}
+        <div className="flex items-center gap-1 flex-shrink-0 ml-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -223,7 +223,7 @@ export function ProjectList({
   }
 
   return (
-    <div className="border border-border rounded-lg overflow-hidden bg-muted/30">
+    <div className="rounded-lg overflow-hidden">
       {projects.map((project) => (
         <ProjectListItem
           key={project.id}
