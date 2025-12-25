@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { MinusIcon, SquareIcon, CopyIcon } from 'lucide-react'
+import { MinusIcon, SquareIcon, CopyIcon, XIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export function TitleBar() {
@@ -24,11 +24,15 @@ export function TitleBar() {
     window.electronAPI.windowClose()
   }
 
+  // macOS 不需要自定义窗口控制按钮
+  if (isMacOS) {
+    return (
+      <div className="h-12 bg-background border-b select-none" style={{ WebkitAppRegion: 'drag' } as React.CSSProperties} />
+    )
+  }
+
   return (
-    <div className={cn(
-      "flex items-center justify-end bg-background border-b px-2 select-none",
-      isMacOS ? "h-12" : "h-8"
-    )} style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}>
+    <div className="flex h-8 items-center justify-end bg-background border-b px-2 select-none" style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}>
       <div className="flex items-center gap-1" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
         <button
           onClick={handleMinimize}
@@ -65,7 +69,7 @@ export function TitleBar() {
           )}
           aria-label="关闭"
         >
-          <SquareIcon className="h-3.5 w-3.5 rotate-45" strokeWidth={2} />
+          <XIcon className="h-3.5 w-3.5" strokeWidth={2} />
         </button>
       </div>
     </div>
