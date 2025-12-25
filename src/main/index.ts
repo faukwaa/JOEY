@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron'
 import path from 'path'
-import { existsSync, readFileSync, writeFileSync, mkdirSync, readdir, stat } from 'fs'
+import { existsSync, readFileSync, writeFileSync, mkdirSync, readdir, stat, rm } from 'fs'
 import { join } from 'path'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
