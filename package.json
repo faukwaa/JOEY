@@ -1,7 +1,7 @@
 {
   "name": "projectMng-new",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
   "main": "dist-electron/main.js",
   "scripts": {
@@ -52,7 +52,8 @@
   },
   "build": {
     "appId": "com.projectmng.app",
-    "productName": "ProjectMng",
+    "productName": "JOEY",
+    "icon": "build/icon.ico",
     "directories": {
       "output": "release"
     },
@@ -62,12 +63,15 @@
       "package.json"
     ],
     "mac": {
+      "icon": "build/icon.icns",
       "category": "public.app-category.developer-tools"
     },
     "win": {
+      "icon": "build/icon.ico",
       "target": "nsis"
     },
     "linux": {
+      "icon": "build/icon.png",
       "target": "AppImage"
     }
   }
