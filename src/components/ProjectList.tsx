@@ -281,7 +281,7 @@ export function ProjectListItem({
                 className="text-destructive focus:text-destructive"
               >
                 <DeleteIcon className="mr-2 h-4 w-4" />
-                从磁盘删除
+                移到回收站
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -301,9 +301,9 @@ export function ProjectListItem({
       <ConfirmDialog
         open={showDeleteFromDiskConfirm}
         onOpenChange={setShowDeleteFromDiskConfirm}
-        title="从磁盘删除"
-        description={`确定要删除项目 "${project.name}" 吗？此操作将永久删除项目文件夹及其所有内容，不可撤销。`}
-        confirmText="删除"
+        title="移到回收站"
+        description={`确定要将项目 "${project.name}" 移到回收站吗？此操作将项目文件夹移动到系统回收站，可以从中恢复。`}
+        confirmText="移到回收站"
         onConfirm={() => onDeleteFromDisk?.(project)}
         variant="destructive"
       />

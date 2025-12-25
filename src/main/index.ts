@@ -1,11 +1,12 @@
 import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron'
 import path from 'path'
-import { existsSync, readFileSync, writeFileSync, mkdirSync, readdir, stat, rm } from 'fs'
+import { existsSync, readFileSync, writeFileSync, mkdirSync, readdir, stat } from 'fs'
 import { join } from 'path'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
 import { exec } from 'child_process'
 import { promisify } from 'util'
+import trash from 'trash'
 
 const execAsync = promisify(exec)
 
@@ -647,7 +648,7 @@ ipcMain.handle('delete-node-modules', async (_, projectPath: string) => {
   }
 })
 
-// 从磁盘删除项目
+// 从磁盘删除项目（移动到回收站）
 ipcMain.handle('delete-project-from-disk', async (_, projectPath: string) => {
   try {
     // 检查项目路径是否存在
@@ -655,13 +656,12 @@ ipcMain.handle('delete-project-from-disk', async (_, projectPath: string) => {
       return { success: false, error: '项目目录不存在' }
     }
 
-    // 删除项目目录
-    const rmAsync = promisify(rm)
-    await rmAsync(projectPath, { recursive: true, force: true })
+    // 将项目移动到回收站
+    await trash(projectPath)
 
     return { success: true }
   } catch (error) {
-    console.error('Error deleting project from disk:', error)
+    console.error('Error moving project to trash:', error)
     return { success: false, error: String(error) }
   }
 })
