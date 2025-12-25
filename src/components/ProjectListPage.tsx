@@ -5,6 +5,7 @@ import { ProjectControls } from '@/components/ProjectControls'
 import { EmptyProjectState } from '@/components/EmptyProjectState'
 import { ScanConfirmDialogs } from '@/components/ScanConfirmDialogs'
 import { useProjectActions } from '@/hooks/useProjectActions'
+import { formatSize } from '@/lib/format'
 
 interface ProjectListPageProps {
   allProjects: Project[]
@@ -108,6 +109,9 @@ export function ProjectListPage({
     return sortOrder === 'asc' ? comparison : -comparison
   })
 
+  // 计算总大小
+  const totalSize = currentFolderProjects.reduce((sum, project) => sum + project.size, 0)
+
   // 监听扫描进度
   useEffect(() => {
     const cleanup = window.electronAPI.onScanProgress(() => {
@@ -185,20 +189,15 @@ export function ProjectListPage({
   return (
     <div className="flex flex-1 flex-col gap-4 p-4">
       {/* 控制栏 */}
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">我的项目</h1>
-          </div>
-          <ProjectControls
-            sortBy={sortBy}
-            sortOrder={sortOrder}
-            onSortByChange={setSortBy}
-            onSortOrderChange={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-            onRescan={handleScanAll}
-            projectCount={currentFolderProjects.length}
-          />
-        </div>
+      <div className="flex items-center justify-end">
+        <ProjectControls
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSortByChange={setSortBy}
+          onSortOrderChange={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+          onRescan={handleScanAll}
+          projectCount={currentFolderProjects.length}
+        />
       </div>
 
       {/* 项目列表 */}
@@ -223,19 +222,33 @@ export function ProjectListPage({
           onScan={handleScanAll}
         />
       ) : (
-        <ProjectList
-          projects={sortedProjects}
-          onOpen={handleOpenProject}
-          onOpenTerminal={handleOpenTerminal}
-          onOpenVSCode={handleOpenVSCode}
-          onOpenQoder={handleOpenQoder}
-          onRefresh={handleRefreshAndUpdate}
-          onDelete={handleDeleteFromListAndUpdate}
-          onDeleteFromDisk={handleDeleteFromDiskAndUpdate}
-          onToggleFavorite={handleToggleFavoriteWrapper}
-          onDeleteNodeModules={handleDeleteNodeModulesAndUpdate}
-          highlightedProjectId={highlightedProjectId}
-        />
+        <div className="flex-1 overflow-auto">
+          <ProjectList
+            projects={sortedProjects}
+            onOpen={handleOpenProject}
+            onOpenTerminal={handleOpenTerminal}
+            onOpenVSCode={handleOpenVSCode}
+            onOpenQoder={handleOpenQoder}
+            onRefresh={handleRefreshAndUpdate}
+            onDelete={handleDeleteFromListAndUpdate}
+            onDeleteFromDisk={handleDeleteFromDiskAndUpdate}
+            onToggleFavorite={handleToggleFavoriteWrapper}
+            onDeleteNodeModules={handleDeleteNodeModulesAndUpdate}
+            highlightedProjectId={highlightedProjectId}
+          />
+        </div>
+      )}
+
+      {/* 统计信息 */}
+      {!loading && !currentScanState.scanning && currentFolderProjects.length > 0 && (
+        <div className="flex items-center justify-between px-4 py-2 text-sm text-muted-foreground border-t">
+          <span>
+            共 <span className="font-semibold text-foreground">{currentFolderProjects.length}</span> 个项目
+          </span>
+          <span>
+            占用 <span className="font-semibold text-foreground">{formatSize(totalSize)}</span>
+          </span>
+        </div>
       )}
 
       {/* 确认对话框 */}
