@@ -15,6 +15,7 @@
     "scanning": "扫描中",
     "scanNow": "立即扫描",
     "stopScan": "停止扫描",
+    "rescan": "重新扫描",
     "noProjectsFound": "{{name}} 没有找到项目",
     "noProjectsYet": "还没有项目",
     "selectFolder": "在左侧选择一个扫描目录",
@@ -31,7 +32,10 @@
     "size": "大小",
     "createdAt": "创建于",
     "updatedAt": "更新于",
+    "created": "创建",
+    "updated": "更新",
     "changes": "{{count}} 个变更",
+    "commits": "commits",
     "open": "打开",
     "openInExplorer": "在文件管理器中打开",
     "openInTerminal": "在终端中打开",
@@ -47,14 +51,34 @@
     "emptyState": {
       "title": "还没有项目",
       "description": "点击左侧的「添加扫描目录」按钮，选择要监控的项目文件夹。"
-    }
+    },
+    "openMethod": "打开方式",
+    "fileManager": "文件管理器",
+    "terminal": "终端",
+    "deleteFromList": "从列表中删除",
+    "deleteFromListDesc": "确定要从列表中删除项目「{{name}}」吗？此操作不会删除实际的文件夹。",
+    "moveToTrash": "移到回收站",
+    "moveToTrashDesc": "确定要将项目「{{name}}」移到回收站吗？此操作将项目文件夹移动到系统回收站，可以从中恢复。",
+    "deleteNodeModulesDesc": "确定要删除项目「{{name}}」的 node_modules 目录吗？此操作不可撤销。"
   },
-  "user": {
-    "upgradeToPro": "升级到 Pro",
-    "account": "账户",
-    "billing": "计费",
-    "notifications": "通知",
-    "logout": "退出登录"
+  "controls": {
+    "searchPlaceholder": "搜索项目...",
+    "sortByName": "按名称",
+    "sortBySize": "按大小",
+    "sortByCreated": "按创建时间",
+    "sortByUpdated": "按更新时间",
+    "ascending": "升序",
+    "descending": "降序"
+  },
+  "stats": {
+    "totalProjects": "共 {{count}} 个项目",
+    "search": "搜索",
+    "totalSize": "占用"
+  },
+  "list": {
+    "loading": "加载中...",
+    "noMatchFound": "未找到匹配的项目",
+    "noMatchDesc": "没有找到与「{{query}}」匹配的项目"
   },
   "settings": {
     "title": "设置",

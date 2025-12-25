@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { SearchIcon } from 'lucide-react'
 import type { Project } from '@/types'
 import { ProjectList } from '@/components/ProjectList'
@@ -41,6 +42,7 @@ export function ProjectListPage({
   saveFavorites,
   highlightedProjectId
 }: ProjectListPageProps) {
+  const { t } = useTranslation()
   const [showStopConfirm, setShowStopConfirm] = useState(false)
   const [showRescanConfirm, setShowRescanConfirm] = useState(false)
   const [sortBy, setSortBy] = useState<'name' | 'createdAt' | 'updatedAt' | 'size'>('updatedAt')
@@ -232,7 +234,7 @@ export function ProjectListPage({
       <div className="flex-1 overflow-auto px-4 pt-16 pb-16">
         {loading ? (
           <div className="flex items-center justify-center h-full">
-            <div className="text-muted-foreground">加载中...</div>
+            <div className="text-muted-foreground">{t('list.loading')}</div>
           </div>
         ) : currentScanState.scanning ? (
           // 扫描中，显示进度条（即使有旧项目也显示进度）
@@ -253,9 +255,9 @@ export function ProjectListPage({
         ) : filteredProjects.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-12">
             <SearchIcon className="h-16 w-16 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">未找到匹配的项目</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('list.noMatchFound')}</h3>
             <p className="text-sm text-muted-foreground max-w-md">
-              没有找到与 "{searchQuery || ''}" 匹配的项目
+              {t('list.noMatchDesc', { query: searchQuery || '' })}
             </p>
           </div>
         ) : (
@@ -294,15 +296,15 @@ export function ProjectListPage({
       {filteredProjects.length > 0 && (
         <div className="absolute bottom-0 left-0 right-0 z-10 flex items-center justify-between px-4 py-3 text-sm text-muted-foreground bg-background/40 backdrop-blur-lg border-t">
           <span>
-            共 <span className="font-semibold text-foreground">{filteredProjects.length}</span> 个项目
+            {t('stats.totalProjects', { count: filteredProjects.length })}
             {searchQuery && searchQuery.trim() && (
               <span className="ml-2 text-muted-foreground">
-                (搜索: <span className="font-medium">{searchQuery}</span>)
+                ({t('stats.search')}: <span className="font-medium">{searchQuery}</span>)
               </span>
             )}
           </span>
           <span>
-            占用 <span className="font-semibold text-foreground">{formatSize(totalSize)}</span>
+            {t('stats.totalSize')}: <span className="font-semibold text-foreground">{formatSize(totalSize)}</span>
           </span>
         </div>
       )}

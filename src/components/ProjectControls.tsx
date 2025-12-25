@@ -1,4 +1,5 @@
 import { memo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { SortAscIcon, SortDescIcon, RefreshCwIcon, SearchIcon, XIcon, LoaderIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -32,9 +33,17 @@ function ProjectControls({
   onSearchChange,
   isSearching
 }: ProjectControlsProps) {
+  const { t } = useTranslation()
+
+  const sortLabels: Record<typeof sortBy, string> = {
+    name: t('controls.sortByName'),
+    size: t('controls.sortBySize'),
+    createdAt: t('controls.sortByCreated'),
+    updatedAt: t('controls.sortByUpdated')
+  }
+
   return (
     <div className="flex items-center gap-2">
-      {/* 搜索 */}
       <div className="flex items-center gap-2">
         {searchQuery !== null ? (
           <div className="flex items-center gap-2">
@@ -42,7 +51,7 @@ function ProjectControls({
               <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="搜索项目..."
+                placeholder={t('controls.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
                 className="pl-8 h-8 w-64 pr-8"
@@ -74,7 +83,6 @@ function ProjectControls({
         )}
       </div>
 
-      {/* 排序 */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm">
@@ -83,36 +91,32 @@ function ProjectControls({
             ) : (
               <SortDescIcon className="h-4 w-4 mr-2" />
             )}
-            {sortBy === 'name' && '按名称'}
-            {sortBy === 'size' && '按大小'}
-            {sortBy === 'createdAt' && '按创建时间'}
-            {sortBy === 'updatedAt' && '按更新时间'}
+            {sortLabels[sortBy]}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => onSortByChange('name')}>
-            按名称
+            {t('controls.sortByName')}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => onSortByChange('size')}>
-            按大小
+            {t('controls.sortBySize')}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => onSortByChange('createdAt')}>
-            按创建时间
+            {t('controls.sortByCreated')}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => onSortByChange('updatedAt')}>
-            按更新时间
+            {t('controls.sortByUpdated')}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={onSortOrderChange}>
-            {sortOrder === 'asc' ? '降序' : '升序'}
+            {sortOrder === 'asc' ? t('controls.descending') : t('controls.ascending')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* 重新扫描 - 只在有项目时显示 */}
       {projectCount > 0 && (
         <Button variant="outline" size="sm" onClick={onRescan}>
           <RefreshCwIcon className="h-4 w-4 mr-2" />
-          重新扫描
+          {t('scan.rescan')}
         </Button>
       )}
     </div>

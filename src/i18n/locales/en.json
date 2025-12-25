@@ -15,6 +15,7 @@
     "scanning": "Scanning",
     "scanNow": "Scan Now",
     "stopScan": "Stop Scan",
+    "rescan": "Rescan",
     "noProjectsFound": "No projects found in {{name}}",
     "noProjectsYet": "No projects yet",
     "selectFolder": "Select a scan folder on the left",
@@ -31,7 +32,10 @@
     "size": "Size",
     "createdAt": "Created",
     "updatedAt": "Updated",
+    "created": "Created",
+    "updated": "Updated",
     "changes": "{{count}} changes",
+    "commits": "commits",
     "open": "Open",
     "openInExplorer": "Open in File Explorer",
     "openInTerminal": "Open in Terminal",
@@ -47,14 +51,34 @@
     "emptyState": {
       "title": "No projects yet",
       "description": "Click \"Add Scan Folder\" button to select project folders to monitor."
-    }
+    },
+    "openMethod": "Open with",
+    "fileManager": "File Manager",
+    "terminal": "Terminal",
+    "deleteFromList": "Remove from list",
+    "deleteFromListDesc": "Are you sure you want to remove \"{{name}}\" from the list? This will not delete the actual folder.",
+    "moveToTrash": "Move to Trash",
+    "moveToTrashDesc": "Are you sure you want to move \"{{name}}\" to trash? This will move the project folder to system trash where it can be restored.",
+    "deleteNodeModulesDesc": "Are you sure you want to delete the node_modules folder of \"{{name}}\"? This action cannot be undone."
   },
-  "user": {
-    "upgradeToPro": "Upgrade to Pro",
-    "account": "Account",
-    "billing": "Billing",
-    "notifications": "Notifications",
-    "logout": "Logout"
+  "controls": {
+    "searchPlaceholder": "Search projects...",
+    "sortByName": "By Name",
+    "sortBySize": "By Size",
+    "sortByCreated": "By Created",
+    "sortByUpdated": "By Updated",
+    "ascending": "Ascending",
+    "descending": "Descending"
+  },
+  "stats": {
+    "totalProjects": "{{count}} projects total",
+    "search": "Search",
+    "totalSize": "Total"
+  },
+  "list": {
+    "loading": "Loading...",
+    "noMatchFound": "No matching projects found",
+    "noMatchDesc": "No projects found matching \"{{query}}\""
   },
   "settings": {
     "title": "Settings",

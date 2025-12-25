@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { Project } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -116,6 +117,7 @@ export function ProjectListItem({
   onDeleteNodeModules?: (project: Project) => void
   isHighlighted?: boolean
 }) {
+  const { t } = useTranslation()
   const icon = detectProjectType(project)
   const [showDeleteFromListConfirm, setShowDeleteFromListConfirm] = useState(false)
   const [showDeleteFromDiskConfirm, setShowDeleteFromDiskConfirm] = useState(false)
@@ -161,8 +163,8 @@ export function ProjectListItem({
           {/* 时间信息 */}
           <div className="text-[10px] text-muted-foreground pl-7">
             <div className="flex items-center gap-3">
-              <span>创建: {formatDate(project.createdAt)}</span>
-              <span>更新: {formatDate(project.updatedAt)}</span>
+              <span>{t('project.created')}: {formatDate(project.createdAt)}</span>
+              <span>{t('project.updated')}: {formatDate(project.updatedAt)}</span>
             </div>
           </div>
         </div>
@@ -178,7 +180,7 @@ export function ProjectListItem({
 
           {project.gitStatus === 'modified' && (
             <Badge variant="secondary" className="text-[10px] h-5 px-1.5 text-orange-600 bg-orange-50 dark:bg-orange-950/30 dark:text-orange-400 whitespace-nowrap">
-              {project.gitChanges} commits
+              {project.gitChanges} {t('project.commits')}
             </Badge>
           )}
 
@@ -226,20 +228,19 @@ export function ProjectListItem({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              {/* 打开方式子菜单 */}
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>
                   <FolderOpenIcon className="mr-2 h-4 w-4" />
-                  打开方式
+                  {t('project.openMethod')}
                 </DropdownMenuSubTrigger>
                 <DropdownMenuSubContent>
                   <DropdownMenuItem onClick={() => onOpen?.(project)}>
                     <FolderOpenIcon className="mr-2 h-4 w-4" />
-                    文件管理器
+                    {t('project.fileManager')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onOpenTerminal?.(project)}>
                     <TerminalIcon className="mr-2 h-4 w-4" />
-                    终端
+                    {t('project.terminal')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onOpenVSCode?.(project)}>
                     <Icon icon="logos:visual-studio-code" className="mr-2 h-4 w-4" />
@@ -254,7 +255,7 @@ export function ProjectListItem({
 
               <DropdownMenuItem onClick={() => onRefresh?.(project)}>
                 <RefreshCwIcon className="mr-2 h-4 w-4" />
-                刷新信息
+                {t('project.refreshInfo')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               {project.hasNodeModules && (
@@ -264,7 +265,7 @@ export function ProjectListItem({
                     className="text-orange-600 focus:text-orange-600 dark:text-orange-400"
                   >
                     <DeleteIcon className="mr-2 h-4 w-4" />
-                    删除 node_modules
+                    {t('project.deleteNodeModules')}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                 </>
@@ -274,14 +275,14 @@ export function ProjectListItem({
                 className="text-muted-foreground focus:text-muted-foreground"
               >
                 <Trash2Icon className="mr-2 h-4 w-4" />
-                从列表中删除
+                {t('project.deleteFromList')}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setShowDeleteFromDiskConfirm(true)}
                 className="text-destructive focus:text-destructive"
               >
                 <DeleteIcon className="mr-2 h-4 w-4" />
-                移到回收站
+                {t('project.moveToTrash')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -292,27 +293,27 @@ export function ProjectListItem({
       <ConfirmDialog
         open={showDeleteFromListConfirm}
         onOpenChange={setShowDeleteFromListConfirm}
-        title="从列表中删除"
-        description={`确定要从列表中删除项目 "${project.name}" 吗？此操作不会删除实际的文件夹。`}
-        confirmText="删除"
+        title={t('project.deleteFromList')}
+        description={t('project.deleteFromListDesc', { name: project.name })}
+        confirmText={t('project.delete')}
         onConfirm={() => onDelete?.(project)}
         variant="default"
       />
       <ConfirmDialog
         open={showDeleteFromDiskConfirm}
         onOpenChange={setShowDeleteFromDiskConfirm}
-        title="移到回收站"
-        description={`确定要将项目 "${project.name}" 移到回收站吗？此操作将项目文件夹移动到系统回收站，可以从中恢复。`}
-        confirmText="移到回收站"
+        title={t('project.moveToTrash')}
+        description={t('project.moveToTrashDesc', { name: project.name })}
+        confirmText={t('project.moveToTrash')}
         onConfirm={() => onDeleteFromDisk?.(project)}
         variant="destructive"
       />
       <ConfirmDialog
         open={showDeleteNodeModulesConfirm}
         onOpenChange={setShowDeleteNodeModulesConfirm}
-        title="删除 node_modules"
-        description={`确定要删除项目 "${project.name}" 的 node_modules 目录吗？此操作不可撤销。`}
-        confirmText="删除"
+        title={t('project.deleteNodeModules')}
+        description={t('project.deleteNodeModulesDesc', { name: project.name })}
+        confirmText={t('project.delete')}
         onConfirm={() => onDeleteNodeModules?.(project)}
         variant="destructive"
       />
