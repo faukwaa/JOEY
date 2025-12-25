@@ -232,7 +232,7 @@ export function ProjectListPage({
       </div>
 
       {/* 控制栏 - 固定顶部，半透明模糊 */}
-      <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-end px-4 py-3 bg-background/80 backdrop-blur-md border-b">
+      <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-end px-4 py-3 bg-background/60 backdrop-blur-md border-b">
         <ProjectControls
           sortBy={sortBy}
           sortOrder={sortOrder}
@@ -245,7 +245,7 @@ export function ProjectListPage({
 
       {/* 统计信息 - 固定底部，半透明模糊 */}
       {currentFolderProjects.length > 0 && (
-        <div className="absolute bottom-0 left-0 right-0 z-10 flex items-center justify-between px-4 py-3 text-sm text-muted-foreground bg-background/80 backdrop-blur-md border-t">
+        <div className="absolute bottom-0 left-0 right-0 z-10 flex items-center justify-between px-4 py-3 text-sm text-muted-foreground bg-background/60 backdrop-blur-md border-t">
           <span>
             共 <span className="font-semibold text-foreground">{currentFolderProjects.length}</span> 个项目
           </span>
