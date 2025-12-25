@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { NavScan } from "@/components/nav-scan"
 import { NavFavorites } from "@/components/nav-favorites"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -19,9 +20,11 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 }
 
 export function AppSidebar({ scannedDirs, projectPaths, allProjects, onPathSelect, onProjectSelect, ...props }: AppSidebarProps) {
+  const isMacOS = useMemo(() => window.navigator.userAgent.includes('Mac OS X'), [])
+
   return (
     <Sidebar collapsible="none" {...props}>
-      <SidebarHeader>
+      <SidebarHeader className={isMacOS ? "pt-4" : ""}>
         <div className="flex items-center justify-between px-2 py-2">
           <div className="flex items-center gap-2">
             <FolderOpenIcon className="h-6 w-6" />

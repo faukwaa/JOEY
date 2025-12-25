@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { MinusIcon, SquareIcon, CopyIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export function TitleBar() {
   const [isMaximized, setIsMaximized] = useState(false)
+  const isMacOS = useMemo(() => window.navigator.userAgent.includes('Mac OS X'), [])
 
   useEffect(() => {
-    // 检查初始窗口状态
     window.electronAPI.windowIsMaximized().then(setIsMaximized)
   }, [])
 
@@ -25,7 +25,10 @@ export function TitleBar() {
   }
 
   return (
-    <div className="flex h-8 items-center justify-end bg-background border-b px-2 select-none" style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}>
+    <div className={cn(
+      "flex items-center justify-end bg-background border-b px-2 select-none",
+      isMacOS ? "h-12" : "h-8"
+    )} style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}>
       <div className="flex items-center gap-1" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
         <button
           onClick={handleMinimize}
