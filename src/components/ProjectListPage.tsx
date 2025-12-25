@@ -193,7 +193,10 @@ export function ProjectListPage({
   return (
     <div className="flex flex-1 flex-col h-full overflow-hidden relative">
       {/* 项目列表区域 - 可滚动 */}
-      <div className="flex-1 overflow-auto px-4 py-4 pt-20 pb-16">
+      <div className="flex-1 overflow-auto px-4 py-4">
+        {/* 顶部占位空间 */}
+        <div className="h-14 shrink-0"></div>
+
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-muted-foreground">加载中...</div>
@@ -229,6 +232,9 @@ export function ProjectListPage({
             highlightedProjectId={highlightedProjectId}
           />
         )}
+
+        {/* 底部占位空间 */}
+        <div className="h-12 shrink-0"></div>
       </div>
 
       {/* 控制栏 - 固定顶部，半透明模糊 */}
