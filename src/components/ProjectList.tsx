@@ -97,13 +97,15 @@ export function ProjectListItem({
   return (
     <div
       className={cn(
-        "group relative rounded-lg px-3 py-2 transition-all duration-200 hover:bg-accent/50 cursor-pointer",
+        "group relative rounded-lg px-3 py-2.5 transition-all duration-200 hover:bg-accent/50 cursor-pointer",
         "bg-muted/30 hover:bg-muted/50 mb-2"
       )}
     >
-      <div className="flex items-center gap-3">
-        {/* 图标和名称 */}
-        <div className="flex items-center gap-2 flex-1 min-w-0">
+      {/* 主布局：小屏幕竖向，大屏幕横向 */}
+      <div className="flex flex-col sm:flex-row lg:flex-row items-start sm:items-center gap-2 lg:gap-3">
+
+        {/* 左侧：图标、名称、路径 */}
+        <div className="flex items-center gap-2 flex-1 min-w-0 w-full sm:w-auto">
           <div className="flex-shrink-0">
             <Icon icon={icon} className="w-5 h-5" />
           </div>
@@ -118,59 +120,58 @@ export function ProjectListItem({
           </div>
         </div>
 
-        {/* 徽章标签 - 限制显示数量 */}
-        <div className="flex items-center gap-1.5 flex-shrink-0">
-          {project.gitBranch && (
+        {/* 中间：徽章和时间 - 小屏幕在路径下方竖向排列 */}
+        <div className="flex flex-row sm:flex-col lg:flex-row items-start sm:items-center gap-1.5 sm:gap-1 flex-shrink-0 w-full sm:w-auto overflow-x-auto">
+
+          {/* 徽章标签 */}
+          <div className="flex items-center gap-1 flex-shrink-0 flex-wrap">
+            {project.gitBranch && (
+              <Badge variant="secondary" className="text-[10px] h-5 px-1.5 whitespace-nowrap">
+                <GitBranchIcon className="mr-0.5 h-2.5 w-2.5" />
+                {project.gitBranch}
+              </Badge>
+            )}
+
+            {project.gitStatus === 'modified' && (
+              <Badge variant="secondary" className="text-[10px] h-5 px-1.5 border-orange-500/30 text-orange-600 bg-orange-50 dark:bg-orange-950/30 dark:text-orange-400 whitespace-nowrap">
+                {project.gitChanges}
+              </Badge>
+            )}
+
+            {project.hasNodeModules && (
+              <Badge variant="secondary" className="text-[10px] h-5 px-1.5 whitespace-nowrap">
+                node_modules
+              </Badge>
+            )}
+
+            {project.packageManager && (
+              <Badge variant="secondary" className="text-[10px] h-5 px-1.5 whitespace-nowrap">
+                {project.packageManager}
+              </Badge>
+            )}
+
             <Badge variant="secondary" className="text-[10px] h-5 px-1.5 whitespace-nowrap">
-              <GitBranchIcon className="mr-0.5 h-2.5 w-2.5" />
-              {project.gitBranch}
+              {formatSize(project.size)}
             </Badge>
-          )}
+          </div>
 
-          {project.gitStatus === 'modified' && (
-            <Badge variant="secondary" className="text-[10px] h-5 px-1.5 border-orange-500/30 text-orange-600 bg-orange-50 dark:bg-orange-950/30 dark:text-orange-400 whitespace-nowrap">
-              {project.gitChanges}
-            </Badge>
-          )}
-
-          {project.hasNodeModules && (
-            <Badge variant="secondary" className="text-[10px] h-5 px-1.5 whitespace-nowrap">
-              node_modules
-            </Badge>
-          )}
-
-          {project.packageManager && (
-            <Badge variant="secondary" className="text-[10px] h-5 px-1.5 whitespace-nowrap">
-              {project.packageManager}
-            </Badge>
-          )}
-
-          <Badge variant="secondary" className="text-[10px] h-5 px-1.5 whitespace-nowrap">
-            {formatSize(project.size)}
-          </Badge>
-        </div>
-
-        {/* 时间信息 - 显示创建和更新时间 */}
-        <div className="flex-shrink-0 text-[10px] text-muted-foreground text-right min-w-[120px] hidden md:block">
-          <div className="space-y-0.5">
-            <div className="flex items-center justify-end gap-1">
-              <span className="opacity-70">创建:</span>
-              <span className="font-medium">{formatDate(project.createdAt)}</span>
-            </div>
-            <div className="flex items-center justify-end gap-1">
-              <span className="opacity-70">更新:</span>
-              <span className="font-medium">{formatDate(project.updatedAt)}</span>
+          {/* 时间信息 */}
+          <div className="text-[10px] text-muted-foreground min-w-[100px] sm:text-right">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-1 sm:justify-end">
+                <span className="opacity-70 sm:hidden">创建:</span>
+                <span className="font-medium">{formatDate(project.createdAt)}</span>
+              </div>
+              <div className="flex items-center gap-1 sm:justify-end">
+                <span className="opacity-70 sm:hidden">更新:</span>
+                <span className="font-medium">{formatDate(project.updatedAt)}</span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* 时间信息 - 小屏幕只显示更新时间 */}
-        <div className="flex-shrink-0 text-[10px] text-muted-foreground text-right min-w-[70px] md:hidden">
-          {formatDate(project.updatedAt)}
-        </div>
-
-        {/* 操作按钮 - 放在最右边 */}
-        <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+        {/* 右侧：操作按钮 - 始终在最右边 */}
+        <div className="flex items-center gap-1 flex-shrink-0 ml-auto sm:ml-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
