@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Project } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -8,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
 import {
   MoreHorizontalIcon,
   FolderOpenIcon,
@@ -17,6 +19,7 @@ import {
   StarIcon,
   StarOffIcon,
   GitBranchIcon,
+  DeleteIcon,
 } from 'lucide-react'
 import { Icon } from '@iconify/react'
 import { formatSize, formatDate } from '@/lib/format'
@@ -28,6 +31,7 @@ interface ProjectListProps {
   onRefresh?: (project: Project) => void
   onDelete?: (project: Project) => void
   onToggleFavorite?: (project: Project) => void
+  onDeleteNodeModules?: (project: Project) => void
 }
 
 // 项目类型检测和图标配置
@@ -85,14 +89,18 @@ export function ProjectListItem({
   onRefresh,
   onDelete,
   onToggleFavorite,
+  onDeleteNodeModules,
 }: {
   project: Project
   onOpen?: (project: Project) => void
   onRefresh?: (project: Project) => void
   onDelete?: (project: Project) => void
   onToggleFavorite?: (project: Project) => void
+  onDeleteNodeModules?: (project: Project) => void
 }) {
   const icon = detectProjectType(project)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showDeleteNodeModulesConfirm, setShowDeleteNodeModulesConfirm] = useState(false)
 
   return (
     <div
@@ -201,8 +209,20 @@ export function ProjectListItem({
                 )}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
+              {project.hasNodeModules && (
+                <>
+                  <DropdownMenuItem
+                    onClick={() => setShowDeleteNodeModulesConfirm(true)}
+                    className="text-orange-600 focus:text-orange-600 dark:text-orange-400"
+                  >
+                    <DeleteIcon className="mr-2 h-4 w-4" />
+                    删除 node_modules
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
               <DropdownMenuItem
-                onClick={() => onDelete?.(project)}
+                onClick={() => setShowDeleteConfirm(true)}
                 className="text-destructive focus:text-destructive"
               >
                 <Trash2Icon className="mr-2 h-4 w-4" />
@@ -212,6 +232,26 @@ export function ProjectListItem({
           </DropdownMenu>
         </div>
       </div>
+
+      {/* 确认对话框 */}
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="删除项目"
+        description={`确定要从列表中删除项目 "${project.name}" 吗？此操作不会删除实际的文件夹。`}
+        confirmText="删除"
+        onConfirm={() => onDelete?.(project)}
+        variant="destructive"
+      />
+      <ConfirmDialog
+        open={showDeleteNodeModulesConfirm}
+        onOpenChange={setShowDeleteNodeModulesConfirm}
+        title="删除 node_modules"
+        description={`确定要删除项目 "${project.name}" 的 node_modules 目录吗？此操作不可撤销。`}
+        confirmText="删除"
+        onConfirm={() => onDeleteNodeModules?.(project)}
+        variant="destructive"
+      />
     </div>
   )
 }
@@ -222,6 +262,7 @@ export function ProjectList({
   onRefresh,
   onDelete,
   onToggleFavorite,
+  onDeleteNodeModules,
 }: ProjectListProps) {
   if (projects.length === 0) {
     return (
@@ -245,6 +286,7 @@ export function ProjectList({
           onRefresh={onRefresh}
           onDelete={onDelete}
           onToggleFavorite={onToggleFavorite}
+          onDeleteNodeModules={onDeleteNodeModules}
         />
       ))}
     </div>

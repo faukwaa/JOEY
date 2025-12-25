@@ -40,9 +40,30 @@ export function ProjectListPage({
   const [sortBy, setSortBy] = useState<'name' | 'createdAt' | 'updatedAt' | 'size'>('updatedAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
-  const { handleOpenProject, handleRefreshProject, handleDeleteProject, handleToggleFavorite } = useProjectActions()
+  const { handleOpenProject, handleRefreshProject, handleDeleteProject, handleDeleteNodeModules, handleToggleFavorite } = useProjectActions()
 
   const currentScanState = getCurrentScanState(currentScanFolder)
+
+  // 处理项目刷新并更新列表
+  const handleRefreshAndUpdate = useCallback(async (project: Project) => {
+    await handleRefreshProject(project, (updatedProject) => {
+      setAllProjects(allProjects.map(p =>
+        p.id === updatedProject.id ? updatedProject : p
+      ))
+    })
+  }, [handleRefreshProject, allProjects, setAllProjects])
+
+  // 处理删除 node_modules 并更新列表
+  const handleDeleteNodeModulesAndUpdate = useCallback(async (project: Project) => {
+    const result = await handleDeleteNodeModules(project, (updatedProject) => {
+      setAllProjects(allProjects.map(p =>
+        p.id === updatedProject.id ? updatedProject : p
+      ))
+    })
+    if (!result.success) {
+      console.error('Failed to delete node_modules:', result.error)
+    }
+  }, [handleDeleteNodeModules, allProjects, setAllProjects])
 
   // 排序项目
   const sortedProjects = [...currentFolderProjects].sort((a, b) => {
@@ -184,9 +205,10 @@ export function ProjectListPage({
         <ProjectList
           projects={sortedProjects}
           onOpen={handleOpenProject}
-          onRefresh={handleRefreshProject}
+          onRefresh={handleRefreshAndUpdate}
           onDelete={handleDeleteProject}
           onToggleFavorite={handleToggleFavoriteWrapper}
+          onDeleteNodeModules={handleDeleteNodeModulesAndUpdate}
         />
       )}
 

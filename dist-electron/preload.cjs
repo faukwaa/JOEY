@@ -23,6 +23,9 @@ electron.contextBridge.exposeInMainWorld("electronAPI", {
   removeScanFolder: (folder) => electron.ipcRenderer.invoke("remove-scan-folder", folder),
   getProjectStats: (projectPath) => electron.ipcRenderer.invoke("get-project-stats", projectPath),
   saveProjectsCache: (projects, folders, scannedDirs, folder) => electron.ipcRenderer.invoke("save-projects-cache", projects, folders, scannedDirs, folder),
+  // 项目操作 APIs
+  deleteNodeModules: (projectPath) => electron.ipcRenderer.invoke("delete-node-modules", projectPath),
+  refreshProjectInfo: (projectPath) => electron.ipcRenderer.invoke("refresh-project-info", projectPath),
   // 扫描进度监听
   onScanProgress: (callback) => {
     const handler = (_, progress) => {

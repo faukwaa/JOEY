@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron'
 import path from 'path'
-import { existsSync, readFileSync, writeFileSync, mkdirSync, readdir, stat } from 'fs'
+import { existsSync, readFileSync, writeFileSync, mkdirSync, readdir, stat, rm } from 'fs'
 import { join } from 'path'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
@@ -574,5 +574,109 @@ ipcMain.handle('get-project-stats', async (_, projectPath: string) => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
+  }
+})
+
+// 删除项目的 node_modules 目录
+ipcMain.handle('delete-node-modules', async (_, projectPath: string) => {
+  try {
+    const nodeModulesPath = join(projectPath, 'node_modules')
+
+    // 检查 node_modules 是否存在
+    if (!existsSync(nodeModulesPath)) {
+      return { success: false, error: 'node_modules 目录不存在' }
+    }
+
+    // 删除 node_modules 目录
+    const rmAsync = promisify(rm)
+    await rmAsync(nodeModulesPath, { recursive: true, force: true })
+
+    return { success: true }
+  } catch (error) {
+    console.error('Error deleting node_modules:', error)
+    return { success: false, error: String(error) }
+  }
+})
+
+// 刷新项目信息（重新获取项目统计信息）
+ipcMain.handle('refresh-project-info', async (_, projectPath: string) => {
+  try {
+    // 获取 Git 信息
+    let gitBranch: string | null = null
+    let gitStatus: 'clean' | 'modified' | 'error' | 'no-git' = 'no-git'
+    let gitChanges = 0
+
+    try {
+      const gitDir = join(projectPath, '.git')
+      if (existsSync(gitDir)) {
+        const { stdout: branch } = await execAsync('git rev-parse --abbrev-ref HEAD', {
+          cwd: projectPath,
+        })
+        const { stdout: status } = await execAsync('git status --porcelain', {
+          cwd: projectPath,
+        })
+        gitBranch = branch.trim()
+        const isClean = status.trim().length === 0
+        gitStatus = isClean ? 'clean' : 'modified'
+        gitChanges = status.trim().split('\n').filter(Boolean).length
+      }
+    } catch {
+      gitStatus = 'error'
+    }
+
+    // 获取项目统计信息
+    let size = 0
+    const hasNodeModules = existsSync(join(projectPath, 'node_modules'))
+    let packageManager: 'npm' | 'yarn' | 'pnpm' | 'bun' | undefined
+
+    if (existsSync(join(projectPath, 'pnpm-lock.yaml'))) {
+      packageManager = 'pnpm'
+    } else if (existsSync(join(projectPath, 'yarn.lock'))) {
+      packageManager = 'yarn'
+    } else if (existsSync(join(projectPath, 'bun.lockb'))) {
+      packageManager = 'bun'
+    } else if (existsSync(join(projectPath, 'package-lock.json'))) {
+      packageManager = 'npm'
+    }
+
+    try {
+      if (process.platform === 'darwin' || process.platform === 'linux') {
+        const duArgs = process.platform === 'darwin' ? ['-sk', projectPath] : ['-sb', projectPath]
+        const { stdout: output } = await execAsync(`du ${duArgs.join(' ')}`, {
+          maxBuffer: 10 * 1024 * 1024,
+        })
+        const match = output.trim().match(/^(\d+)/)
+        if (match) {
+          const sizeInKB = parseInt(match[1], 10)
+          size = process.platform === 'darwin' ? sizeInKB * 1024 : sizeInKB
+        }
+      } else if (process.platform === 'win32') {
+        const { stdout: output } = await execAsync(
+          `powershell -NoProfile -Command "'{0:N0}' - ((Get-ChildItem -Path '${projectPath}' -Recurse -File -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum | Select-Object -First 1)"`,
+          {
+            maxBuffer: 10 * 1024 * 1024,
+          }
+        )
+        const sizeStr = output.trim().replace(/,/g, '')
+        size = parseInt(sizeStr, 10)
+      }
+    } catch {
+      // 如果获取大小失败，保持为 0
+    }
+
+    return {
+      success: true,
+      projectInfo: {
+        gitBranch,
+        gitStatus,
+        gitChanges,
+        size,
+        hasNodeModules,
+        packageManager
+      }
+    }
+  } catch (error) {
+    console.error('Error refreshing project info:', error)
+    return { success: false, error: String(error) }
   }
 })

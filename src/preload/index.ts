@@ -25,6 +25,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   removeScanFolder: (folder: string) => ipcRenderer.invoke('remove-scan-folder', folder),
   getProjectStats: (projectPath: string) => ipcRenderer.invoke('get-project-stats', projectPath),
   saveProjectsCache: (projects: unknown[], folders: string[], scannedDirs?: string[], folder?: string) => ipcRenderer.invoke('save-projects-cache', projects, folders, scannedDirs, folder),
+  // 项目操作 APIs
+  deleteNodeModules: (projectPath: string) => ipcRenderer.invoke('delete-node-modules', projectPath),
+  refreshProjectInfo: (projectPath: string) => ipcRenderer.invoke('refresh-project-info', projectPath),
   // 扫描进度监听
   onScanProgress: (callback) => {
     const handler = (_: unknown, progress: { stage: string; current: number; total: number; message: string }) => {
@@ -60,6 +63,19 @@ declare global {
         updatedAt: string
       }>
       saveProjectsCache: (projects: unknown[], folders: string[], scannedDirs?: string[], folder?: string) => Promise<{ success: boolean; error?: string }>
+      deleteNodeModules: (projectPath: string) => Promise<{ success: boolean; error?: string }>
+      refreshProjectInfo: (projectPath: string) => Promise<{
+        success: boolean
+        error?: string
+        projectInfo?: {
+          gitBranch: string | null
+          gitStatus: 'clean' | 'modified' | 'error' | 'no-git'
+          gitChanges: number
+          size: number
+          hasNodeModules: boolean
+          packageManager?: 'npm' | 'yarn' | 'pnpm' | 'bun'
+        }
+      }>
       // 扫描进度事件
       onScanProgress: (callback: (progress: { stage: string; current: number; total: number; message: string }) => void) => () => void
     }

@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain, shell, dialog } from "electron";
 import path, { dirname, join } from "path";
-import { existsSync, stat, readdir, readFileSync, writeFileSync, mkdirSync } from "fs";
+import { existsSync, stat, readdir, rm, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { fileURLToPath } from "url";
 import { exec } from "child_process";
 import { promisify } from "util";
@@ -409,5 +409,92 @@ ipcMain.handle("get-project-stats", async (_, projectPath) => {
       createdAt: (/* @__PURE__ */ new Date()).toISOString(),
       updatedAt: (/* @__PURE__ */ new Date()).toISOString()
     };
+  }
+});
+ipcMain.handle("delete-node-modules", async (_, projectPath) => {
+  try {
+    const nodeModulesPath = join(projectPath, "node_modules");
+    if (!existsSync(nodeModulesPath)) {
+      return { success: false, error: "node_modules 目录不存在" };
+    }
+    const rmAsync = promisify(rm);
+    await rmAsync(nodeModulesPath, { recursive: true, force: true });
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting node_modules:", error);
+    return { success: false, error: String(error) };
+  }
+});
+ipcMain.handle("refresh-project-info", async (_, projectPath) => {
+  try {
+    let gitBranch = null;
+    let gitStatus = "no-git";
+    let gitChanges = 0;
+    try {
+      const gitDir = join(projectPath, ".git");
+      if (existsSync(gitDir)) {
+        const { stdout: branch } = await execAsync("git rev-parse --abbrev-ref HEAD", {
+          cwd: projectPath
+        });
+        const { stdout: status } = await execAsync("git status --porcelain", {
+          cwd: projectPath
+        });
+        gitBranch = branch.trim();
+        const isClean = status.trim().length === 0;
+        gitStatus = isClean ? "clean" : "modified";
+        gitChanges = status.trim().split("\n").filter(Boolean).length;
+      }
+    } catch {
+      gitStatus = "error";
+    }
+    let size = 0;
+    const hasNodeModules = existsSync(join(projectPath, "node_modules"));
+    let packageManager;
+    if (existsSync(join(projectPath, "pnpm-lock.yaml"))) {
+      packageManager = "pnpm";
+    } else if (existsSync(join(projectPath, "yarn.lock"))) {
+      packageManager = "yarn";
+    } else if (existsSync(join(projectPath, "bun.lockb"))) {
+      packageManager = "bun";
+    } else if (existsSync(join(projectPath, "package-lock.json"))) {
+      packageManager = "npm";
+    }
+    try {
+      if (process.platform === "darwin" || process.platform === "linux") {
+        const duArgs = process.platform === "darwin" ? ["-sk", projectPath] : ["-sb", projectPath];
+        const { stdout: output } = await execAsync(`du ${duArgs.join(" ")}`, {
+          maxBuffer: 10 * 1024 * 1024
+        });
+        const match = output.trim().match(/^(\d+)/);
+        if (match) {
+          const sizeInKB = parseInt(match[1], 10);
+          size = process.platform === "darwin" ? sizeInKB * 1024 : sizeInKB;
+        }
+      } else if (process.platform === "win32") {
+        const { stdout: output } = await execAsync(
+          `powershell -NoProfile -Command "'{0:N0}' - ((Get-ChildItem -Path '${projectPath}' -Recurse -File -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum | Select-Object -First 1)"`,
+          {
+            maxBuffer: 10 * 1024 * 1024
+          }
+        );
+        const sizeStr = output.trim().replace(/,/g, "");
+        size = parseInt(sizeStr, 10);
+      }
+    } catch {
+    }
+    return {
+      success: true,
+      projectInfo: {
+        gitBranch,
+        gitStatus,
+        gitChanges,
+        size,
+        hasNodeModules,
+        packageManager
+      }
+    };
+  } catch (error) {
+    console.error("Error refreshing project info:", error);
+    return { success: false, error: String(error) };
   }
 });
