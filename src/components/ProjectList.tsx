@@ -163,8 +163,8 @@ export function ProjectListItem({
           {/* 时间信息 */}
           <div className="text-[10px] text-muted-foreground pl-7">
             <div className="flex items-center gap-3">
-              <span>{t('project.created')}: {formatDate(project.createdAt)}</span>
-              <span>{t('project.updated')}: {formatDate(project.updatedAt)}</span>
+              <span>{t('project.created')}: {formatDate(project.createdAt, t)}</span>
+              <span>{t('project.updated')}: {formatDate(project.updatedAt, t)}</span>
             </div>
           </div>
         </div>

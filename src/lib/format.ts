@@ -12,9 +12,9 @@ export function formatSize(bytes: number): string {
 }
 
 /**
- * 格式化日期
+ * 格式化日期（带翻译支持）
  */
-export function formatDate(date: Date | string): string {
+export function formatDate(date: Date | string, t?: (key: string) => string): string {
   const d = typeof date === 'string' ? new Date(date) : date;
 
   const now = new Date();
@@ -25,21 +25,39 @@ export function formatDate(date: Date | string): string {
     const hours = Math.floor(diff / (1000 * 60 * 60));
     if (hours === 0) {
       const minutes = Math.floor(diff / (1000 * 60));
+      if (t) {
+        return minutes === 0 ? t('time.justNow') : t('time.minutesAgo', { count: minutes });
+      }
       return minutes === 0 ? '刚刚' : `${minutes} 分钟前`;
+    }
+    if (t) {
+      return t('time.hoursAgo', { count: hours });
     }
     return `${hours} 小时前`;
   } else if (days === 1) {
-    return '昨天';
+    return t ? t('time.yesterday') : '昨天';
   } else if (days < 7) {
+    if (t) {
+      return t('time.daysAgo', { count: days });
+    }
     return `${days} 天前`;
   } else if (days < 30) {
     const weeks = Math.floor(days / 7);
+    if (t) {
+      return t('time.weeksAgo', { count: weeks });
+    }
     return `${weeks} 周前`;
   } else if (days < 365) {
     const months = Math.floor(days / 30);
+    if (t) {
+      return t('time.monthsAgo', { count: months });
+    }
     return `${months} 个月前`;
   } else {
     const years = Math.floor(days / 365);
+    if (t) {
+      return t('time.yearsAgo', { count: years });
+    }
     return `${years} 年前`;
   }
 }

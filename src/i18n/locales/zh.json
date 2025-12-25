@@ -80,6 +80,16 @@
     "noMatchFound": "未找到匹配的项目",
     "noMatchDesc": "没有找到与「{{query}}」匹配的项目"
   },
+  "time": {
+    "justNow": "刚刚",
+    "minutesAgo": "{{count}} 分钟前",
+    "hoursAgo": "{{count}} 小时前",
+    "yesterday": "昨天",
+    "daysAgo": "{{count}} 天前",
+    "weeksAgo": "{{count}} 周前",
+    "monthsAgo": "{{count}} 个月前",
+    "yearsAgo": "{{count}} 年前"
+  },
   "settings": {
     "title": "设置",
     "language": "语言",

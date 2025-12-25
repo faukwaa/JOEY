@@ -167,11 +167,11 @@ export function ProjectCard({
       <div className="text-xs text-muted-foreground space-y-1 mb-3">
         <div className="flex items-center justify-between">
           <span>{t('project.createdAt')}</span>
-          <span className="font-medium">{formatDate(project.createdAt)}</span>
+          <span className="font-medium">{formatDate(project.createdAt, t)}</span>
         </div>
         <div className="flex items-center justify-between">
           <span>{t('project.updatedAt')}</span>
-          <span className="font-medium">{formatDate(project.updatedAt)}</span>
+          <span className="font-medium">{formatDate(project.updatedAt, t)}</span>
         </div>
       </div>
 
