@@ -17,6 +17,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getProjectsCache: () => ipcRenderer.invoke('get-projects-cache'),
   getGitInfo: (projectPath: string) => ipcRenderer.invoke('get-git-info', projectPath),
   openProjectFolder: (projectPath: string) => ipcRenderer.invoke('open-project-folder', projectPath),
+  openProjectTerminal: (projectPath: string) => ipcRenderer.invoke('open-project-terminal', projectPath),
+  openProjectVSCode: (projectPath: string) => ipcRenderer.invoke('open-project-vscode', projectPath),
+  openProjectQoder: (projectPath: string) => ipcRenderer.invoke('open-project-qoder', projectPath),
   selectFolders: () => ipcRenderer.invoke('select-folders'),
   // Scan folders management APIs
   saveScanFolders: (folders: string[]) => ipcRenderer.invoke('save-scan-folders', folders),
@@ -51,6 +54,9 @@ declare global {
       getProjectsCache: () => Promise<{ projects: unknown[]; folders: string[]; scannedDirs?: string[]; scannedDirsMap?: Record<string, string[]>; scannedAt: string } | null>
       getGitInfo: (projectPath: string) => Promise<{ branch: string | null; status: 'clean' | 'modified' | 'error' | 'no-git'; changes: number }>
       openProjectFolder: (projectPath: string) => Promise<{ success: boolean }>
+      openProjectTerminal: (projectPath: string) => Promise<{ success: boolean; error?: string }>
+      openProjectVSCode: (projectPath: string) => Promise<{ success: boolean; error?: string }>
+      openProjectQoder: (projectPath: string) => Promise<{ success: boolean; error?: string }>
       selectFolders: () => Promise<{ folders: string[] }>
       saveScanFolders: (folders: string[]) => Promise<{ success: boolean; error?: string }>
       getScanFolders: () => Promise<{ folders: string[] }>

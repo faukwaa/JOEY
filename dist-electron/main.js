@@ -291,6 +291,42 @@ ipcMain.handle("open-project-folder", async (_, projectPath) => {
   await shell.openPath(projectPath);
   return { success: true };
 });
+ipcMain.handle("open-project-terminal", async (_, projectPath) => {
+  try {
+    const platform = process.platform;
+    let command;
+    if (platform === "darwin") {
+      command = `open -a Terminal "${projectPath}"`;
+    } else if (platform === "win32") {
+      command = `start cmd /K "cd /d "${projectPath}""`;
+    } else {
+      command = `gnome-terminal --working-directory="${projectPath}" || xterm -e "cd '${projectPath}' && bash"`;
+    }
+    await execAsync(command);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to open terminal:", error);
+    return { success: false, error: String(error) };
+  }
+});
+ipcMain.handle("open-project-vscode", async (_, projectPath) => {
+  try {
+    await execAsync(`code "${projectPath}"`);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to open VSCode:", error);
+    return { success: false, error: String(error) };
+  }
+});
+ipcMain.handle("open-project-qoder", async (_, projectPath) => {
+  try {
+    await execAsync(`qoder "${projectPath}"`);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to open Qoder:", error);
+    return { success: false, error: String(error) };
+  }
+});
 ipcMain.handle("select-folders", async () => {
   const result = await dialog.showOpenDialog({
     properties: ["openDirectory", "multiSelections"],

@@ -14,6 +14,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
   getProjectsCache: () => ipcRenderer.invoke("get-projects-cache"),
   getGitInfo: (projectPath) => ipcRenderer.invoke("get-git-info", projectPath),
   openProjectFolder: (projectPath) => ipcRenderer.invoke("open-project-folder", projectPath),
+  openProjectTerminal: (projectPath) => ipcRenderer.invoke("open-project-terminal", projectPath),
+  openProjectVSCode: (projectPath) => ipcRenderer.invoke("open-project-vscode", projectPath),
+  openProjectQoder: (projectPath) => ipcRenderer.invoke("open-project-qoder", projectPath),
   selectFolders: () => ipcRenderer.invoke("select-folders"),
   // Scan folders management APIs
   saveScanFolders: (folders) => ipcRenderer.invoke("save-scan-folders", folders),

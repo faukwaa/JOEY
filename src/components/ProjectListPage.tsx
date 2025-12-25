@@ -40,7 +40,7 @@ export function ProjectListPage({
   const [sortBy, setSortBy] = useState<'name' | 'createdAt' | 'updatedAt' | 'size'>('updatedAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
-  const { handleOpenProject, handleRefreshProject, handleDeleteProject, handleDeleteProjectFromDisk, handleDeleteNodeModules, handleToggleFavorite } = useProjectActions()
+  const { handleOpenProject, handleOpenTerminal, handleOpenVSCode, handleOpenQoder, handleRefreshProject, handleDeleteProject, handleDeleteProjectFromDisk, handleDeleteNodeModules, handleToggleFavorite } = useProjectActions()
 
   const currentScanState = getCurrentScanState(currentScanFolder)
 
@@ -224,6 +224,9 @@ export function ProjectListPage({
         <ProjectList
           projects={sortedProjects}
           onOpen={handleOpenProject}
+          onOpenTerminal={handleOpenTerminal}
+          onOpenVSCode={handleOpenVSCode}
+          onOpenQoder={handleOpenQoder}
           onRefresh={handleRefreshAndUpdate}
           onDelete={handleDeleteFromListAndUpdate}
           onDeleteFromDisk={handleDeleteFromDiskAndUpdate}

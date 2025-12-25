@@ -8,6 +8,9 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from '@/components/ui/dropdown-menu'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import {
@@ -20,6 +23,7 @@ import {
   StarOffIcon,
   GitBranchIcon,
   DeleteIcon,
+  ChevronRightIcon,
 } from 'lucide-react'
 import { Icon } from '@iconify/react'
 import { formatSize, formatDate } from '@/lib/format'
@@ -28,6 +32,9 @@ import { cn } from '@/lib/utils'
 interface ProjectListProps {
   projects: Project[]
   onOpen?: (project: Project) => void
+  onOpenTerminal?: (project: Project) => void
+  onOpenVSCode?: (project: Project) => void
+  onOpenQoder?: (project: Project) => void
   onRefresh?: (project: Project) => void
   onDelete?: (project: Project) => void
   onDeleteFromDisk?: (project: Project) => void
@@ -87,6 +94,9 @@ function detectProjectType(project: Project): string {
 export function ProjectListItem({
   project,
   onOpen,
+  onOpenTerminal,
+  onOpenVSCode,
+  onOpenQoder,
   onRefresh,
   onDelete,
   onDeleteFromDisk,
@@ -95,6 +105,9 @@ export function ProjectListItem({
 }: {
   project: Project
   onOpen?: (project: Project) => void
+  onOpenTerminal?: (project: Project) => void
+  onOpenVSCode?: (project: Project) => void
+  onOpenQoder?: (project: Project) => void
   onRefresh?: (project: Project) => void
   onDelete?: (project: Project) => void
   onDeleteFromDisk?: (project: Project) => void
@@ -187,14 +200,33 @@ export function ProjectListItem({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => onOpen?.(project)}>
-                <FolderOpenIcon className="mr-2 h-4 w-4" />
-                在文件管理器中打开
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <TerminalIcon className="mr-2 h-4 w-4" />
-                在终端中打开
-              </DropdownMenuItem>
+              {/* 打开方式子菜单 */}
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <FolderOpenIcon className="mr-2 h-4 w-4" />
+                  打开方式
+                  <ChevronRightIcon className="ml-auto h-4 w-4" />
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  <DropdownMenuItem onClick={() => onOpen?.(project)}>
+                    <FolderOpenIcon className="mr-2 h-4 w-4" />
+                    文件管理器
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onOpenTerminal?.(project)}>
+                    <TerminalIcon className="mr-2 h-4 w-4" />
+                    终端
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onOpenVSCode?.(project)}>
+                    <Icon icon="vscode:file-type-code" className="mr-2 h-4 w-4" />
+                    VSCode
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onOpenQoder?.(project)}>
+                    <Icon icon="mdi:code-braces" className="mr-2 h-4 w-4" />
+                    Qoder
+                  </DropdownMenuItem>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+
               <DropdownMenuItem onClick={() => onRefresh?.(project)}>
                 <RefreshCwIcon className="mr-2 h-4 w-4" />
                 刷新信息
@@ -279,6 +311,9 @@ export function ProjectListItem({
 export function ProjectList({
   projects,
   onOpen,
+  onOpenTerminal,
+  onOpenVSCode,
+  onOpenQoder,
   onRefresh,
   onDelete,
   onDeleteFromDisk,
@@ -304,6 +339,9 @@ export function ProjectList({
           key={project.id}
           project={project}
           onOpen={onOpen}
+          onOpenTerminal={onOpenTerminal}
+          onOpenVSCode={onOpenVSCode}
+          onOpenQoder={onOpenQoder}
           onRefresh={onRefresh}
           onDelete={onDelete}
           onDeleteFromDisk={onDeleteFromDisk}

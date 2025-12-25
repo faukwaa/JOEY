@@ -14,6 +14,48 @@ export function useProjectActions() {
     }
   }, [])
 
+  // 在终端中打开项目
+  const handleOpenTerminal = useCallback(async (project: Project) => {
+    try {
+      const result = await window.electronAPI.openProjectTerminal(project.path)
+      if (result.success) {
+        console.log('Terminal opened successfully')
+      } else {
+        console.error('Failed to open terminal:', result.error)
+      }
+    } catch (error) {
+      console.error('Failed to open terminal:', error)
+    }
+  }, [])
+
+  // 在 VSCode 中打开项目
+  const handleOpenVSCode = useCallback(async (project: Project) => {
+    try {
+      const result = await window.electronAPI.openProjectVSCode(project.path)
+      if (result.success) {
+        console.log('VSCode opened successfully')
+      } else {
+        console.error('Failed to open VSCode:', result.error)
+      }
+    } catch (error) {
+      console.error('Failed to open VSCode:', error)
+    }
+  }, [])
+
+  // 在 Qoder 中打开项目
+  const handleOpenQoder = useCallback(async (project: Project) => {
+    try {
+      const result = await window.electronAPI.openProjectQoder(project.path)
+      if (result.success) {
+        console.log('Qoder opened successfully')
+      } else {
+        console.error('Failed to open Qoder:', result.error)
+      }
+    } catch (error) {
+      console.error('Failed to open Qoder:', error)
+    }
+  }, [])
+
   // 刷新单个项目
   const handleRefreshProject = useCallback(async (project: Project, onUpdate?: (project: Project) => void) => {
     try {
@@ -72,6 +114,9 @@ export function useProjectActions() {
 
   return {
     handleOpenProject,
+    handleOpenTerminal,
+    handleOpenVSCode,
+    handleOpenQoder,
     handleRefreshProject,
     handleDeleteProject,
     handleDeleteProjectFromDisk,
