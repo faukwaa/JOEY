@@ -137,6 +137,7 @@ export function App() {
         allProjects={allProjects}
         onPathSelect={handlePathSelect}
         onProjectSelect={handleProjectSelect}
+        onProjectsChange={setAllProjects}
       />
       <SidebarInset className="h-full overflow-hidden flex flex-col">
         <TitleBar />

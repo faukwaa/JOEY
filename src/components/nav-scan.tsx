@@ -14,14 +14,17 @@ import {
 import { Button } from "@/components/ui/button"
 import { useDirectoryTree } from "@/hooks/useDirectoryTree"
 import type { TreeNode } from "@/hooks/useDirectoryTree"
+import type { Project } from "@/types"
 
 interface NavScanProps {
   scannedDirs: string[]
   projectPaths: string[]
+  allProjects: Project[]
   onPathSelect: (path: string) => void
+  onProjectsChange?: (projects: Project[]) => void
 }
 
-export function NavScan({ scannedDirs, projectPaths, onPathSelect }: NavScanProps) {
+export function NavScan({ scannedDirs, projectPaths, allProjects, onPathSelect, onProjectsChange }: NavScanProps) {
   const { t } = useTranslation()
   const [scanFolders, setScanFolders] = useState<string[]>([])
   const [selectedPath, setSelectedPath] = useState<string>("")
@@ -110,16 +113,53 @@ export function NavScan({ scannedDirs, projectPaths, onPathSelect }: NavScanProp
 
   const handleRemoveFolder = async (folderPath: string) => {
     try {
+      // 找出属于该扫描目录的所有项目
+      const projectsToRemove = allProjects.filter(p => p.scanFolder === folderPath || p.path.startsWith(folderPath))
+
+      // 从缓存中删除这些项目
+      if (projectsToRemove.length > 0 && onProjectsChange) {
+        const updatedProjects = allProjects.filter(p => p.scanFolder !== folderPath && !p.path.startsWith(folderPath))
+        onProjectsChange(updatedProjects)
+
+        // 保存更新后的项目缓存
+        const cache = await window.electronAPI.getProjectsCache()
+        if (cache) {
+          // 移除属于该扫描目录的项目
+          const filteredProjects = (cache.projects || []).filter((p: Project) =>
+            p.scanFolder !== folderPath && !p.path.startsWith(folderPath)
+          )
+          const filteredDirs = (cache.scannedDirs || []).filter((d: string) => !d.startsWith(folderPath))
+          // 移除该扫描目录的映射
+          const updatedScannedDirsMap = cache.scannedDirsMap || {}
+          delete updatedScannedDirsMap[folderPath]
+
+          await window.electronAPI.saveProjectsCache(
+            filteredProjects,
+            cache.folders || [],
+            filteredDirs,
+            undefined,
+            cache.favorites,
+            updatedScannedDirsMap
+          )
+        }
+      }
+
+      // 从配置中移除扫描目录
       await window.electronAPI.removeScanFolder(folderPath)
+
       // 重新加载列表
       const loadResult = await window.electronAPI.getScanFolders()
       const folders = loadResult.folders || []
       setScanFolders(folders)
+
       // 如果删除的是当前选中的，选中第一个
       if (selectedPath === folderPath) {
         const remaining = folders.filter(f => f !== folderPath)
         if (remaining.length > 0) {
           handleSelectPath(remaining[0])
+        } else {
+          setSelectedPath('')
+          onPathSelect('')
         }
       }
     } catch (error) {
@@ -221,7 +261,7 @@ export function NavScan({ scannedDirs, projectPaths, onPathSelect }: NavScanProp
                         {/* 根文件夹 */}
                         <SidebarMenuSubButton
                           className={cn(
-                            "group/data-[collapsible=icon]:hidden",
+                            "group/data-[collapsible=icon]:hidden group",
                             isSelected && "bg-accent"
                           )}
                           onClick={() => handleSelectPath(folder)}

@@ -18,9 +18,10 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   allProjects: Project[]
   onPathSelect: (path: string) => void
   onProjectSelect: (project: Project) => void
+  onProjectsChange?: (projects: Project[]) => void
 }
 
-export function AppSidebar({ scannedDirs, projectPaths, allProjects, onPathSelect, onProjectSelect, ...props }: AppSidebarProps) {
+export function AppSidebar({ scannedDirs, projectPaths, allProjects, onPathSelect, onProjectSelect, onProjectsChange, ...props }: AppSidebarProps) {
   const isMacOS = useMemo(() => window.navigator.userAgent.includes('Mac OS X'), [])
 
   return (
@@ -44,7 +45,9 @@ export function AppSidebar({ scannedDirs, projectPaths, allProjects, onPathSelec
         <NavScan
           scannedDirs={scannedDirs}
           projectPaths={projectPaths}
+          allProjects={allProjects}
           onPathSelect={onPathSelect}
+          onProjectsChange={onProjectsChange}
         />
         <NavFavorites
           projects={allProjects}
