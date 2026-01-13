@@ -6,7 +6,6 @@ import { fileURLToPath } from 'url'
 import { dirname } from 'path'
 import { exec } from 'child_process'
 import { promisify } from 'util'
-import trash from 'trash'
 
 const execAsync = promisify(exec)
 
@@ -714,8 +713,8 @@ ipcMain.handle('delete-project-from-disk', async (_, projectPath: string) => {
       return { success: false, error: '项目目录不存在' }
     }
 
-    // 将项目移动到回收站
-    await trash(projectPath)
+    // 使用 Electron 内置的 shell.trashItem 将项目移动到回收站
+    await shell.trashItem(projectPath)
 
     return { success: true }
   } catch (error) {
