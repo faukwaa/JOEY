@@ -90,6 +90,14 @@
     "monthsAgo": "{{count}} 个月前",
     "yearsAgo": "{{count}} 年前"
   },
+  "deleteProgress": {
+    "movingToTrash": "正在移到回收站",
+    "movingToTrashDesc": "正在将项目「{{name}}」移到回收站，请稍候...",
+    "deletingNodeModules": "正在删除 node_modules",
+    "deletingNodeModulesDesc": "正在删除项目「{{name}}」的 node_modules 目录，这可能需要一些时间...",
+    "processing": "处理中...",
+    "progressPercent": "{{percent}}%"
+  },
   "settings": {
     "title": "设置",
     "language": "语言",

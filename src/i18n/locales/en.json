@@ -90,6 +90,14 @@
     "monthsAgo": "{{count}}mo ago",
     "yearsAgo": "{{count}}y ago"
   },
+  "deleteProgress": {
+    "movingToTrash": "Moving to Trash",
+    "movingToTrashDesc": "Moving \"{{name}}\" to trash, please wait...",
+    "deletingNodeModules": "Deleting node_modules",
+    "deletingNodeModulesDesc": "Deleting the node_modules folder of \"{{name}}\", this may take a while...",
+    "processing": "Processing...",
+    "progressPercent": "{{percent}}%"
+  },
   "settings": {
     "title": "Settings",
     "language": "Language",

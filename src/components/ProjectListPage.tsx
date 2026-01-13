@@ -6,6 +6,7 @@ import { ProjectList } from '@/components/ProjectList'
 import ProjectControls from '@/components/ProjectControls'
 import { EmptyProjectState } from '@/components/EmptyProjectState'
 import { ScanConfirmDialogs } from '@/components/ScanConfirmDialogs'
+import { DeleteProgressDialog } from '@/components/DeleteProgressDialog'
 import { useProjectActions } from '@/hooks/useProjectActions'
 import { formatSize } from '@/lib/format'
 
@@ -49,6 +50,19 @@ export function ProjectListPage({
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [searchQuery, setSearchQuery] = useState<string | null>(null)
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string | null>(null)
+
+  // 删除进度对话框状态
+  const [deleteProgress, setDeleteProgress] = useState<{
+    open: boolean
+    type: 'project' | 'node_modules'
+    projectName: string
+    progress: number | undefined
+  }>({
+    open: false,
+    type: 'project',
+    projectName: '',
+    progress: undefined
+  })
 
   const { handleOpenProject, handleOpenTerminal, handleOpenVSCode, handleOpenQoder, handleRefreshProject, handleDeleteProject, handleDeleteProjectFromDisk, handleDeleteNodeModules } = useProjectActions()
 
@@ -120,11 +134,33 @@ export function ProjectListPage({
 
   // 处理删除 node_modules 并更新列表
   const handleDeleteNodeModulesAndUpdate = useCallback(async (project: Project) => {
+    // 显示删除进度对话框
+    setDeleteProgress({
+      open: true,
+      type: 'node_modules',
+      projectName: project.name,
+      progress: undefined
+    })
+
+    // 模拟进度动画
+    let progress = 0
+    const progressInterval = setInterval(() => {
+      progress += Math.random() * 15
+      if (progress > 90) progress = 90
+      setDeleteProgress(prev => ({ ...prev, progress }))
+    }, 300)
+
     const result = await handleDeleteNodeModules(project, (updatedProject) => {
       setAllProjects(allProjects.map(p =>
         p.id === updatedProject.id ? updatedProject : p
       ))
     })
+
+    clearInterval(progressInterval)
+
+    // 关闭对话框
+    setDeleteProgress(prev => ({ ...prev, open: false, progress: 100 }))
+
     if (!result.success) {
       console.error('Failed to delete node_modules:', result.error)
     }
@@ -132,7 +168,19 @@ export function ProjectListPage({
 
   // 处理从磁盘删除项目
   const handleDeleteFromDiskAndUpdate = useCallback(async (project: Project) => {
+    // 显示删除进度对话框
+    setDeleteProgress({
+      open: true,
+      type: 'project',
+      projectName: project.name,
+      progress: undefined
+    })
+
     const result = await handleDeleteProjectFromDisk(project)
+
+    // 关闭对话框
+    setDeleteProgress(prev => ({ ...prev, open: false }))
+
     if (result.success) {
       // 从项目列表中移除
       setAllProjects(allProjects.filter(p => p.id !== project.id))
@@ -319,6 +367,14 @@ export function ProjectListPage({
         onStopCancel={cancelStopScan}
         onRescanConfirm={confirmRescan}
         onRescanCancel={cancelRescan}
+      />
+
+      {/* 删除进度对话框 */}
+      <DeleteProgressDialog
+        open={deleteProgress.open}
+        type={deleteProgress.type}
+        projectName={deleteProgress.projectName}
+        progress={deleteProgress.progress}
       />
     </div>
   )
